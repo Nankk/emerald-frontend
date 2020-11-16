@@ -4,5 +4,6 @@
 
 (defn css []
   (g/css
-   [:#main-panel {:background-color (c/base 2)}
+   [:#main-panel {:background-color (c/base 2)
+                  :overflow "hidden"}
     ]))
