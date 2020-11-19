@@ -17,15 +17,15 @@
            :width "100%"
            :background-color (c/base 1)}]
    ;; Font sizes are relative to viewport height
-   [:h1 {:font-size "1rem"
+   [:h1 {:font-size "5vw!important"
          :margin "0.1rem"}]
-   [:h2 {:font-size "0.8rem"
+   [:h2 {:font-size "4.5vw!important"
          :margin "0.08rem"}]
-   [:h3 {:font-size "0.7rem"
+   [:h3 {:font-size "4vw!important"
          :margin "0.07rem"}]
-   [:h4 {:font-size "0.6rem"
+   [:h4 {:font-size "3.5vw!important"
          :margin "0.06rem"}]
-   [:h5 {:font-size "0.5rem"
+   [:h5 {:font-size "3vw!important"
          :margin "0.05rem"}]
-   [:p  {:font-size "3vh"}]
+   [:p  {:font-size "2vh!important"}]
    ))
