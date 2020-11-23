@@ -5,9 +5,11 @@
    ))
 
 (def handlers
-  {::initialize-db    (fn [_ [_ _]] db/default-db)
-   ::set-panel-width [:panel-width]
-   ::set-panel-height [:panel-height]
+  {::initialize-db       (fn [_ [_ _]] db/default-db)
+   ::set-panel-width     [:panel-width]
+   ::set-panel-height    [:panel-height]
+   ::set-character-param (fn [db [_ ks v]]
+                           (assoc-in db (concat [:cur-character] ks) v))
    })
 
 (doseq [[ev-key item] handlers]

@@ -12,7 +12,7 @@
   [:div
    (when header [:div header])
    (let [group-name (str (random-uuid))
-         default-size :h5]
+         default-size :h3]
      (into
       [:div]
       (for [i (range (count choices))]

@@ -4,9 +4,11 @@
    ))
 
 (def subscriptions
-  {::name         [:name]
-   ::panel-width  [:panel-width]
-   ::panel-height [:panel-height]})
+  {::name          [:name]
+   ::panel-width   [:panel-width]
+   ::panel-height  [:panel-height]
+   ::cur-character [:cur-character]
+   ::characters    [:characters]})
 
 (doseq [[sub-key item] subscriptions]
   (if (coll? item)

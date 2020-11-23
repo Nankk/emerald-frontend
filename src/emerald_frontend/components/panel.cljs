@@ -45,7 +45,9 @@
                    :top "0px"
                    :left "0px"
                    :width "100vw"
-                   :height "100vh"}}]))
+                   :height "100vh"
+                   :background-color "#000000"
+                   :opacity "0.3"}}]))
 
 (defn- modal-body [key [top left] z-idx body]
   (let [display (get-in @*modal-state [key :display])]

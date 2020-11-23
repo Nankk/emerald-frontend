@@ -20,7 +20,7 @@
  ["src"
   "test"]
 
- :jvm-opts ["-Xmx768m"]
+ :jvm-opts ["-Xmx768M"]
 
  :builds {:app {:target     :browser
                 :output-dir "resources/public/js/compiled"

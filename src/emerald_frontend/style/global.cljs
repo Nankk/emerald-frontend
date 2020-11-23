@@ -16,16 +16,31 @@
    [:#app {:height "100%"
            :width "100%"
            :background-color (c/base 1)}]
+
    ;; Font sizes are relative to viewport height
-   [:h1 {:font-size "5vw!important"
-         :margin "0.1rem"}]
-   [:h2 {:font-size "4.5vw!important"
+   [:h1 {:font-size "4.0vw!important"
+         :margin "3vw"}]
+   [:h2 {:font-size "3.0vw!important"
          :margin "0.08rem"}]
-   [:h3 {:font-size "4vw!important"
+   [:h3 {:font-size "2.5vw!important"
          :margin "0.07rem"}]
-   [:h4 {:font-size "3.5vw!important"
+   [:h4 {:font-size "2.0vw!important"
          :margin "0.06rem"}]
-   [:h5 {:font-size "3vw!important"
-         :margin "0.05rem"}]
+   [:h5 {:font-size "1.5vw!important"
+         :margin "0.5vw"}]
+   [:h6 {:font-size "1.0vw!important"
+         :margin "0.5vw"}]
    [:p  {:font-size "2vh!important"}]
+
+   ;; Aux
+   [:hr {:width "100%"
+         :height "0.1vw"
+         :background-color "#ffffff"
+         :margin "0"
+         }]
+
+   ;; For nes components
+   [:.nes-container.is-rounded {:margin "0px"
+                                :padding "1vw 2vw"}]
+   [:label {:margin "0px"}]
    ))
