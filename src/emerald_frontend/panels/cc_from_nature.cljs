@@ -129,8 +129,9 @@
 
 ;;; Born ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defonce *origin (reagent/atom ""))
-(defonce *freedom (reagent/atom ""))
+(defonce *nightmare-origin (reagent/atom ""))
+(defonce *nightmare-freedom (reagent/atom ""))
+(defonce *lycant-head (reagent/atom ""))
 (defonce *cur-born (reagent/atom nil))
 (defonce *born-data (reagent/atom {}))
 
@@ -150,7 +151,7 @@
     :choices-size :h4
     :choices (into [] (for [origin origins]
                         {:text     origin
-                         :on-click #(reset! *origin origin)}))]])
+                         :on-click #(reset! *nightmare-origin origin)}))]])
 
 (defn- nightmare-freedom [freedoms]
   [:div
@@ -160,27 +161,51 @@
     :choices-size :h4
     :choices (into [] (for [freedom freedoms]
                         {:text     (freedom :title)
-                         :on-click #(reset! *freedom freedom)}))]
-   [:h4 ((first (filter #(= (% :title) (@*freedom :title)) freedoms)) :description)]])
+                         :on-click #(reset! *nightmare-freedom freedom)}))]
+   [:h4 ((first (filter #(= (% :title) (@*nightmare-freedom :title)) freedoms)) :description)]])
 
 (defn- nightmare-opts [born]
   (when (= @(rf/subscribe [::subs/cur-character-param [:species]]) "ナイトメア")
     [:div
      (let [origins (set (map #(nth % 1) (filter #(re-find #"origin-" (name (% 0))) born)))]
-       (reset! *origin (first origins))
+       (reset! *nightmare-origin (first origins))
        [nightmare-origin origins])
      (when-let [freedoms (born :自由になれた理由)]
-       (reset! *freedom (first freedoms))
+       (reset! *nightmare-freedom (first freedoms))
        [nightmare-freedom freedoms])]))
+
+(defn- lycant-opts [born]
+  (when (= @(rf/subscribe [::subs/cur-character-param [:species]]) "リカント")
+    [:div
+     [:hr]
+     [list/choice
+      :header [:h3 "頭部の形状"]
+      :direction :horizontal
+      :choices-size :h4
+      :choices (into [] (for [shape (map :title (born :頭部))]
+                          {:text     shape
+                           :on-click #(reset! *lycant-head shape)}))]]))
+
+(defn- born-result [born]
+  (let [title       (cond-> (born :title)
+                      @*nightmare-origin (str ,, "（出自：" @*nightmare-origin "）")
+                      @*lycant-head      (str ,, "（頭部の形状：" @*lycant-head "）"))
+        description (cond-> (born :description)
+                      @*nightmare-freedom (str ,, "（自由になれた理由 ["
+                                                  (@*nightmare-freedom :title) "]："
+                                                  (@*nightmare-freedom :description) "）"))]
+    {:title title :description description}))
 
 (defn- born-detail []
   (when-let [born @*cur-born]
     [:div.nes-container.is-dark.is-rounded {:style {:width "90vw"}}
      [:h3 (born :title)]
      [:h4 (born :description)]
-     (reset! *origin nil)
-     (reset! *freedom nil)
+     (reset! *nightmare-origin nil)
+     (reset! *nightmare-freedom nil)
+     (reset! *lycant-head nil)
      [nightmare-opts born]
+     [lycant-opts born]
      [:hr]
      [list/choice
       :header [:h3 "これでいいですか？"]
@@ -188,15 +213,7 @@
                  :on-click
                  #(do
                     (rf/dispatch-sync
-                     [::events/set-character-param
-                      [:born]
-                      {:title (str (born :title)
-                                   (when @*origin
-                                     (str "（出自：" @*origin "）")))
-                       :description (str (born :description)
-                                         (when @*freedom
-                                           (str "（自由になれた理由 [" (@*freedom :title) "]："
-                                                (@*freedom :description))))}])
+                     [::events/set-character-param [:born] (born-result born)])
                     (container/switch-panels :cc-nature-born :cc-nature-childhood :left))}
                 {:text     "いいえ"
                  :on-click #(panel/close-modal :born-detail)}]
