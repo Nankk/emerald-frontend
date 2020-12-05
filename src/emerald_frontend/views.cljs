@@ -9,7 +9,7 @@
   [container/transient-container
    {:home              [home/main]
     :cc-nature-species [nature/species-main]
-    :cc-nature-role    [nature/role-main]
+    :cc-nature-job     [nature/job-main]
     :cc-nature-born    [nature/born-main]}])
 
 (defn main-panel []
@@ -17,4 +17,6 @@
    [:div#main-panel {:style
                      {:width  (str @(rf/subscribe [::subs/panel-width]) "px")
                       :height (str @(rf/subscribe [::subs/panel-height]) "px")}}
-    [panels]]])
+    ;; [panels]
+    [nature/born-main]
+    ]])

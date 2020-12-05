@@ -17,3 +17,7 @@
     (rf/reg-event-db ev-key
       (fn [db [_ v]] (assoc-in db (vec item) v)))
     (rf/reg-event-db ev-key item)))
+
+(comment
+  (rf/dispatch-sync [::set-character-param [:species] "ナイトメア"])
+  )

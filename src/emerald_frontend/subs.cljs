@@ -4,11 +4,13 @@
    ))
 
 (def subscriptions
-  {::name          [:name]
-   ::panel-width   [:panel-width]
-   ::panel-height  [:panel-height]
-   ::cur-character [:cur-character]
-   ::characters    [:characters]})
+  {::name                [:name]
+   ::panel-width         [:panel-width]
+   ::panel-height        [:panel-height]
+   ::cur-character       [:cur-character]
+   ::cur-character-param (fn [db [_ ks]]
+                           (get-in db (concat [:cur-character] ks)))
+   ::characters          [:characters]})
 
 (doseq [[sub-key item] subscriptions]
   (if (coll? item)
