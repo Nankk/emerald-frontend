@@ -1,12 +1,12 @@
 ;;; Under construction...
-;;; Outgoing panel is immediately collapse at switching timing instead of after the animation.
+;;; Outgoing panel is immediately none at switching timing instead of after the animation.
 (ns emerald-frontend.components.container
   (:require [reagent.core :as reagent]))
 
 (defonce ^:private panel-states! (reagent/atom {})
   ;; Example
   #_{:panel-key {:container container-uuid
-                 :visibility "visible | collapse"
+                 :display "block | none"
                  :transient-class "slide-up"}})
 
 (defn switch-panels
@@ -21,18 +21,18 @@
   ;; Transition
   (swap! panel-states! assoc-in [from-key :transient-class] (str (name transition) "-out"))
   (swap! panel-states! assoc-in [to-key :transient-class] (str (name transition) "-in"))
-  ;; Visibility
-  (swap! panel-states! assoc-in [from-key :visibility] "collapse")
-  (swap! panel-states! assoc-in [to-key :visibility] "visible")
+  ;; Display
+  (swap! panel-states! assoc-in [from-key :display] "none")
+  (swap! panel-states! assoc-in [to-key :display] "block")
 
   (println @panel-states!))
 
 (defn- add-panel-states [panels container-id]
   (let [panel-states (into {} (for [panel-key (keys panels)]
                                 [panel-key {:container container-id
-                                            :visibility "collapse"
+                                            :display "none"
                                             :transient-class :slide-up}]))]
-    (swap! panel-states! merge (assoc-in panel-states [(first (keys panels)) :visibility] "visible"))))
+    (swap! panel-states! merge (assoc-in panel-states [(first (keys panels)) :display] "block"))))
 
 (defn- transient-panel [panel-kv]
   (let [state (@panel-states! (panel-kv 0))]
@@ -40,7 +40,7 @@
       ;; Each panel-kv
       (println "state:" state)
       [:div.w-100.h-100 {:class (state :transient-class)
-                         :style {:visibility (state :visibility)
+                         :style {:display (state :display)
                                  :position "absolute"
                                  :top "0px"
                                  :left "0px"}}
