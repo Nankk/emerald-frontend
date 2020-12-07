@@ -20,4 +20,6 @@
 
 (comment
   (rf/dispatch-sync [::set-character-param [:species] "ナイトメア"])
+  (rf/dispatch-sync [::set-character-param [:species] "リカント"])
+  (rf/dispatch-sync [::set-character-param [:job] "戦士"])
   )

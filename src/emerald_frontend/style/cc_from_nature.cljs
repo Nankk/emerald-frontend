@@ -38,6 +38,8 @@
     :#cc-nature-infancy
     :#cc-nature-childhood
     :#cc-nature-adolescence
+    :#cc-nature-happening1
+    :#cc-nature-happening2
     [:.grid-container {:display "grid"
                        :grid-template-columns "0.5fr 1fr 2fr 0.5fr"
                        :grid-template-rows "0.3fr 0.8fr 1.2fr"

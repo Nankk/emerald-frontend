@@ -7,10 +7,15 @@
 
 (defn- panels []
   [container/transient-container
-   {:home              [home/main]
-    :cc-nature-species [nature/species-main]
-    :cc-nature-job     [nature/job-main]
-    :cc-nature-born    [nature/born-main]}])
+   {:home                 [home/main]
+    :cc-nature-species    [nature/species-main]
+    :cc-nature-job        [nature/job-main]
+    :cc-nature-born       [nature/born-main]
+    :cc-nature-infancy    [nature/infancy-main]
+    :cc-nature-happening1 [nature/happening1-main]
+    :cc-nature-childhood  [nature/childhood-main]
+    :cc-nature-happening2 [nature/happening2-main]
+    }])
 
 (defn main-panel []
   [:div.d-flex.flex-row.align-items-center.justify-content-center.w-100.h-100

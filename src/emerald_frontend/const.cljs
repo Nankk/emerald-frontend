@@ -3,16 +3,8 @@
 
 (def server-url
   (if config/debug?
-    "http://localhost:3000"
+    "https://nankk.net/sw-tools-api/v1"
     "https://hogefuga.net"))
-
-;; (def species-str->key
-;;   {"人間"       :human
-;;    "エルフ"     :elf
-;;    "タビット"   :tabbit
-;;    "ドワーフ"   :dwarf
-;;    "リカント"   :lycant
-;;    "ナイトメア" :nightmare})
 
 (def species-list
   {"人間"       {:feature     "運命変転：運命をコロコロする"
@@ -34,25 +26,32 @@
                  :description "社会不適合者をカッコよく言い換えたもの。本人は満足そう"
                  :aptitude    ["戦士" "拳闘士" "密偵" "魔術師" "操霊術師" "神官" "魔法戦士"]}})
 
-;; (def job-str->key
-;;   {"戦士"     :fighter
-;;    "剣士"     :knight
-;;    "魔法戦士" :magical-fighter
-;;    "魔法剣士" :magical-knight
-;;    "拳闘士"   :grappler
-;;    "密偵"     :spy
-;;    "魔術師"   :sorcerer
-;;    "操霊術士" :conjurer
-;;    "神官"     :priest})
-
 (def jobs
   (array-map
-   "戦士" {:description "いわゆるタンク。PTに1人は入れとかないと壊滅するんジャー"}
-   "剣士" {:description "紙装甲である代わりにガンガンクリティカル出すんジャー"}
+   "戦士"     {:description "いわゆるタンク。PTに1人は入れとかないと壊滅するんジャー"}
+   "剣士"     {:description "紙装甲である代わりにガンガンクリティカル出すんジャー"}
    "魔法戦士" {:description "MP持ちのタンク。すなわち自己修復機能付きの壁"}
    "魔法剣士" {:description "「まほうけん」が使える。わけではない。魔法と剣が使える"}
-   "拳闘士" {:description "男と生まれたからには、誰でも一生の内一度は夢見る「地上最強の男」。グラップラーとは、「地上最強の男」を目指す格闘士のことである（例のBGM）"}
-   "密偵" {:description "スパイ業を営む。国家の陰謀の成否は彼に掛かっている"}
-   "魔術師" {:description "黒魔道士のこと"}
+   "拳闘士"   {:description "男と生まれたからには、誰でも一生の内一度は夢見る「地上最強の男」。グラップラーとは、「地上最強の男」を目指す格闘士のことである（例のBGM）"}
+   "密偵"     {:description "スパイ業を営む。国家の陰謀の成否は彼に掛かっている"}
+   "魔術師"   {:description "黒魔道士のこと"}
    "操霊術師" {:description "公式イラストのおねえさんがエロい"}
-   "神官" {:description "白魔道士のこと"}))
+   "神官"     {:description "白魔道士のこと"}))
+
+(def job->category
+  {"戦士"     "戦士系"
+   "剣士"     "戦士系"
+   "魔法戦士" "魔法戦士系"
+   "魔法剣士" "魔法戦士系"
+   "拳闘士"   "戦士系"
+   "密偵"     "密偵系"
+   "魔術師"   "遠隔支援系"
+   "操霊術師" "遠隔支援系"
+   "神官"     "遠隔支援系"})
+
+(defn language->str [{:keys [title oral literal]}]
+  (let [or?   (or oral literal)
+        both? (and oral literal)]
+    (str title
+         (when or?
+           (str "（" (when oral "会話") (when both? "、") (when literal "読文") "）")))))

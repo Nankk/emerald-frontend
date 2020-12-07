@@ -1,24 +1,27 @@
-(ns emerald-frontend.db)
+(ns emerald-frontend.db
+  (:require [emerald-frontend.config :as config]))
 
 (def default-db
-  {:cur-character {} #_ {:name    'str
-                         :age     'int
-                         :gender  'k
-                         :species 'str
-                         :job     'str
-                         :nature  {:born        'str
-                                   :infancy     {:event     {:name        'str
-                                                             :type        'str
-                                                             :description 'str}
-                                                 :happening {:name        'str
-                                                             :description 'str}}
-                                   :childhood   {:event     {:name        'str
-                                                             :type        'str
-                                                             :description 'str}
-                                                 :happening {:name        'str
-                                                             :description 'str}}
-                                   :adolescence {:event   {:name        'str
-                                                           :type        'str
-                                                           :description 'str}
-                                                 :purpose {:name        'str
-                                                           :description 'str}}}}})
+  (if config/debug?
+    {:cur-character  {:name    ""
+                      :age     10
+                      :gender  "male"
+                      :species "人間"
+                      :job     "戦士"
+                      :nature  {:born        ""
+                                :infancy     {:event     {:name        ""
+                                                          :type        ""
+                                                          :description ""}
+                                              :happening {:name        ""
+                                                          :description ""}}
+                                :childhood   {:event     {:name        ""
+                                                          :type        ""
+                                                          :description ""}
+                                              :happening {:name        ""
+                                                          :description ""}}
+                                :adolescence {:event   {:name        ""
+                                                        :type        ""
+                                                        :description ""}
+                                              :purpose {:name        ""
+                                                        :description ""}}}}}
+    {}))
