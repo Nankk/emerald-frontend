@@ -13,7 +13,7 @@
 
 ;;; Happenings ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(let []
+(do
 
   (defonce *cur-happening1  (reagent/atom nil))
   (defonce *cur-happening2  (reagent/atom nil))
@@ -182,9 +182,11 @@
 
 ;;; Childhood ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(let [*cur-childhood (reagent/atom nil)
-      *childhood-data (reagent/atom {})
-      *language (reagent/atom {})]
+(do
+
+  (defonce *cur-childhood (reagent/atom nil))
+  (defonce *childhood-data (reagent/atom {}))
+  (defonce *language (reagent/atom {}))
 
   (defan- <load-childhood []
     (println "<load-childhood")
@@ -269,8 +271,10 @@
 
 ;;; Infancy ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(let [*cur-infancy  (reagent/atom nil)
-      *infancy-data (reagent/atom {})]
+(do
+
+  (defonce *cur-infancy  (reagent/atom nil))
+  (defonce *infancy-data (reagent/atom {}))
 
   (defan- <load-infancy []
     (println "<load-infancy")
@@ -355,11 +359,14 @@
 
 ;;; Born ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(let [*nightmare-origin  (reagent/atom "")
-      *nightmare-freedom (reagent/atom "")
-      *lycant-head       (reagent/atom "")
-      *cur-born          (reagent/atom nil)
-      *born-data         (reagent/atom {})]
+(do
+
+  (defonce *human-noble       (reagent/atom ""))
+  (defonce *nightmare-origin  (reagent/atom ""))
+  (defonce *nightmare-freedom (reagent/atom ""))
+  (defonce *lycant-head       (reagent/atom ""))
+  (defonce *cur-born          (reagent/atom nil))
+  (defonce *born-data         (reagent/atom {}))
 
   (defan- <load-born []
     (println "<load-born")
@@ -367,6 +374,29 @@
       (reset! *born-data (res :body))
       (println (res :body))
       true))
+
+  ;; Options
+
+  (defn- human-noble [reasons]
+    [:div
+     [:hr]
+     [list/choice
+      :header [:h4 "貴族が冒険に出た理由"]
+      :direction :horizontal
+      :choices-size :h4
+      :choices (into [] (for [freedom reasons]
+                          {:text     (freedom :title)
+                           :on-click #(reset! *human-noble freedom)}))]
+     [:h4 ((first (filter #(= (% :title) (@*human-noble :title)) reasons)) :description)]])
+
+  (defn- human-opts [born]
+    (when (and (= @(rf/subscribe [::subs/cur-character-param [:species]]) "人間")
+               (= (born :title) "貴族(都市)"))
+      [:div
+       ;; TODO :人間-貴族 を変更（both FE & BE）
+       (when-let [reasons (born :人間-貴族)]
+         (reset! *human-noble (first reasons))
+         [human-noble reasons])]))
 
   (defn- nightmare-origin [origins]
     [:div
@@ -413,11 +443,16 @@
                             {:text     shape
                              :on-click #(reset! *lycant-head shape)}))]]))
 
+  ;; Main
+
   (defn- born-result [born]
     (let [title       (cond-> (born :title)
                         @*nightmare-origin (str ,, "（出自：" @*nightmare-origin "）")
                         @*lycant-head      (str ,, "（頭部の形状：" @*lycant-head "）"))
           description (cond-> (born :description)
+                        @*human-noble       (str ,, "（貴族が冒険に出た理由 ["
+                                                    (@*human-noble :title) "]："
+                                                    (@*human-noble :description) "）")
                         @*nightmare-freedom (str ,, "（自由になれた理由 ["
                                                     (@*nightmare-freedom :title) "]："
                                                     (@*nightmare-freedom :description) "）"))]
@@ -431,6 +466,7 @@
        (reset! *nightmare-origin nil)
        (reset! *nightmare-freedom nil)
        (reset! *lycant-head nil)
+       [human-opts born]
        [nightmare-opts born]
        [lycant-opts born]
        [:hr]
@@ -485,7 +521,9 @@
 
 ;;; Job ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(let [*cur-job (reagent/atom nil)]
+(do
+
+  (defonce *cur-job (reagent/atom nil))
 
   (defn- aptitude-test [species job]
     (let [species-list const/species-list
@@ -525,9 +563,11 @@
 
 ;;; Species ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(let [cols-count 3
-      *head-idx (reagent/atom 0)
-      idx->pos-class ["panel-left" "panel-center" "panel-right"]]
+(do
+
+  (def cols-count 3)
+  (def idx->pos-class ["panel-left" "panel-center" "panel-right"])
+  (defonce *head-idx (reagent/atom 0))
 
   (defn- shift-head-idx [cur diff]
     (let [len      (count const/species-list)
