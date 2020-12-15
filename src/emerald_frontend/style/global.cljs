@@ -38,9 +38,18 @@
          :background-color "#ffffff"
          :margin "0"
          }]
+   [:.hidden-input {:width    "0.1px"
+                    :height   "0.1px"
+                    :opacity  "0"
+                    :overflow "hidden"
+                    :position "absolute"
+                    :z-index  "-1"}]
+   [:.profile-image {:style {:object-fit "contain"}
+                     :image-rendering "pixelated"}]
 
    ;; For nes components
    [:.nes-container.is-rounded {:margin "0px"
                                 :padding "1vw 2vw"}]
    [:label {:margin "0px"}]
+   [:input :.nes-input :.is-dark {:padding "0vw 1vw"}]
    ))

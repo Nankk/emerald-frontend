@@ -27,12 +27,12 @@
 
   (println @panel-states!))
 
-(defn- add-panel-states [panels container-id]
+(defn- add-panel-states [init-key panels container-id]
   (let [panel-states (into {} (for [panel-key (keys panels)]
                                 [panel-key {:container container-id
                                             :display "none"
                                             :transient-class :slide-up}]))]
-    (swap! panel-states! merge (assoc-in panel-states [(first (keys panels)) :display] "block"))))
+    (swap! panel-states! merge (assoc-in panel-states [init-key :display] "block"))))
 
 (defn- transient-panel [panel-kv]
   (let [state (@panel-states! (panel-kv 0))]
@@ -48,12 +48,13 @@
 
 (defn transient-container
   "Container to manage multiple panels and their transition.
-  Arguments: {'panel1-key 'panel1-component ...}"
-  [panels]
+  init-key 'keyword-of-init-panel
+  panels   {'panel1-key 'panel1-component ...}"
+  [init-key panels]
   (reagent/create-class
    {:component-did-mount
     (fn []
-      (add-panel-states panels (str (random-uuid))))
+      (add-panel-states init-key panels (str (random-uuid))))
 
     :reagent-render
     (fn [] (into

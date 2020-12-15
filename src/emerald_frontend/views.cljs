@@ -7,14 +7,19 @@
 
 (defn- panels []
   [container/transient-container
-   {:home                 [home/main]
-    :cc-nature-species    [nature/species-main]
-    :cc-nature-job        [nature/job-main]
-    :cc-nature-born       [nature/born-main]
-    :cc-nature-infancy    [nature/infancy-main]
-    :cc-nature-happening1 [nature/happening1-main]
-    :cc-nature-childhood  [nature/childhood-main]
-    :cc-nature-happening2 [nature/happening2-main]
+   :cc-nature-name
+   {:home                          [home/main]
+    :cc-nature-species             [nature/species-main]
+    :cc-nature-job                 [nature/job-main]
+    :cc-nature-born                [nature/born-main]
+    :cc-nature-infancy             [nature/infancy-main]
+    :cc-nature-happening-infancy   [nature/happening-main :infancy]
+    :cc-nature-childhood           [nature/childhood-main]
+    :cc-nature-happening-childhood [nature/happening-main :childhood]
+    :cc-nature-adolescence         [nature/adolescence-main]
+    :cc-nature-reason              [nature/reason-main]
+    :cc-nature-name                [nature/name-main]
+    :cc-nature-confirmation        [nature/confirmation-main]
     }])
 
 (defn main-panel []
@@ -22,6 +27,6 @@
    [:div#main-panel {:style
                      {:width  (str @(rf/subscribe [::subs/panel-width]) "px")
                       :height (str @(rf/subscribe [::subs/panel-height]) "px")}}
-    ;; [panels]
-    [nature/born-main]
+    [panels]
+    ;; [nature/adolescence-main]
     ]])

@@ -3,8 +3,11 @@
 
 (def server-url
   (if config/debug?
+    "http://localhost:3000"
     "https://nankk.net/sw-tools-api/v1"
-    "https://hogefuga.net"))
+    ))
+
+(def upload-image-size-limit 200000)
 
 (def species-list
   {"人間"       {:feature     "運命変転：運命をコロコロする"

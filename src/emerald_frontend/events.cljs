@@ -21,6 +21,8 @@
 (comment
   (rf/dispatch-sync [::set-character-param [:species] "人間"])
   (rf/dispatch-sync [::set-character-param [:species] "ナイトメア"])
-  (rf/dispatch-sync [::set-character-param [:species] "リカント"])
+  (rf/dispatch-sync [::set-character-param [:species] "エルフ"])
   (rf/dispatch-sync [::set-character-param [:job] "戦士"])
+  (rf/dispatch-sync [::set-character-param [:gender] "female"])
+  (rf/dispatch-sync [::set-character-param [:nature :infancy :event :type] "バランス"])
   )

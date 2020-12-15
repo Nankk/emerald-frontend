@@ -38,8 +38,8 @@
     :#cc-nature-infancy
     :#cc-nature-childhood
     :#cc-nature-adolescence
-    :#cc-nature-happening1
-    :#cc-nature-happening2
+    :#cc-nature-happening
+    :#cc-nature-reason
     [:.grid-container {:display "grid"
                        :grid-template-columns "0.5fr 1fr 2fr 0.5fr"
                        :grid-template-rows "0.3fr 0.8fr 1.2fr"
@@ -53,4 +53,29 @@
     [:.experience-list {:grid-area "experience-list"}]
     [:.selector {:grid-area "selector"}]
     [:.image {:grid-area "image"}]]
+   [:#cc-nature-name
+    [:.grid-container {:display "grid"
+                       :grid-template-columns "0.5fr 3fr 0.5fr"
+                       :grid-template-rows "0.3fr 1.4fr 0.3fr"
+                       :gap "0.2rem 0.2rem"
+                       :grid-template-areas
+                       (pr-str "aux-left title ."
+                               ". main ."
+                               ". . .")}]
+
+    [:.main {:grid-area "main"}]
+    [:.title {:grid-area "title"}]
+    [:.aux-left {:grid-area "aux-left"}]]
+   [:#cc-nature-confirmation
+    [:.grid-container {:display "grid"
+                       :grid-template-columns "0.5fr 3fr 0.5fr"
+                       :grid-template-rows "0.3fr 1.7fr"
+                       :gap "0.2rem 0.2rem"
+                       :grid-template-areas
+                       (pr-str ". title ."
+                               ". main ."
+                               ". . .")}]
+
+    [:.main {:grid-area "main"}]
+    [:.title {:grid-area "title"}]]
    ))

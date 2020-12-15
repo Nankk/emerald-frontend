@@ -1,22 +1,227 @@
 (ns emerald-frontend.panels.cc-from-nature
-  (:require [cljs.core.async :refer [go <!]]
+  (:require [cljs.core.async :refer [<! go]]
+            [cljs.reader :as reader]
+            [clojure.string :as str]
             [emerald-frontend.components.container :as container]
             [emerald-frontend.components.list :as list]
+            [emerald-frontend.components.panel :as panel]
             [emerald-frontend.const :as const]
             [emerald-frontend.events :as events]
-            [emerald-frontend.subs :as subs]
             [emerald-frontend.macros.async :refer [defan defan-]]
+            [emerald-frontend.subs :as subs]
             [emerald-frontend.util.http :as http]
+            [async-interop.interop :refer-macros [<p!]]
             [re-frame.core :as rf]
-            [reagent.core :as reagent]
-            [emerald-frontend.components.panel :as panel]))
+            [reagent.core :as reagent]))
+
+;;; Confirmation ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(do
+
+  (defn confirmation-main []
+    [:div#cc-nature-confirmation.w-100.h-100.p-1
+     [:div.grid-container.w-100.h-100
+      ;; Header
+      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "これでいいですか？"]]
+      ;; Panel
+      [:div.nes-container.is-dark.is-rounded.main
+       [:div.d-flex.flex-row.align-items-center.w-100.h-100
+        [:div "aaa"]]]]])
+
+  )
+
+;;; Name ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(do
+
+  (defonce *name-data (atom {}))
+
+  ;; Only for blank check
+  (defonce *cur-first (atom ""))
+  (defonce *cur-last (atom ""))
+
+  (defan- <load-name []
+    (println "<load-name")
+    (let [res (<! (http/<get-data "/cbb/name"))]
+      (reset! *name-data (res :body))
+      true))
+
+  (defan- <load-image [file]
+    (if (<= (.-size file) const/upload-image-size-limit)
+      (let [image {:name   (.-name file)
+                   :size   (.-size file)
+                   :base64 (str/replace (<p! (js/toDataURLPromise file)) #"data.*base64," "")}]
+        (rf/dispatch-sync [::events/set-character-param [:image] image])
+        true)
+      (do (panel/show-modal :name-error)
+          false)))
+
+  (defn- profile-image []
+    [:div
+     ;; Hidden input element
+     [:input.hidden-input {:id        "file-selector"
+                           :type      "file"
+                           :name      "files[]"
+                           :accept    "image/*" ; Image files only
+                           :on-change (fn [e]
+                                        (let [file (first (.. e -target -files))]
+                                          (<load-image file)))}]
+     ;; Image
+     [:div.nes-container.is-dark.is-rounded {:style {:width    "20vw"     :height  "20vw"
+                                                     :position "relative" :padding "1vw"}}
+      ;; Default style of input elements is ugly so using a label instead
+      [:label {:for "file-selector"}
+       [:div.nes-btn.is-secondary {:style {:width    "5vw"      :height "5vw"    :padding "0px"
+                                           :position "absolute" :left   "-1.5vw" :top     "-1.5vw"}}
+        [:i.fas.fa-cloud-upload-alt.fa-sm]]]
+      ;; Picture area
+      (if-let [image @(rf/subscribe [::subs/cur-character-param [:image]])]
+        [:img.profile-image.w-100.h-100 {:src (str "data:" (image :type) ";base64," (image :base64))}]
+        [:div "I am a default image!"])]
+     ])
+
+  (defn- exact-species [species born]
+    (if-not (= species "ナイトメア")
+      species
+      ((re-find #"（出自：(.+)）" born) 1)))
+
+  (defn- random-name [gender species]
+    (let [exact-species (exact-species species @(rf/subscribe [::subs/cur-character-param [:nature :born :title]]))
+          species-key   (keyword (get-in @*name-data [:種族 0 (keyword exact-species)]))
+          first-list    (@*name-data (if (= gender "male") :男性名 :女性名))
+          last-list     (@*name-data :姓)
+          first-name    (first-list (rand-int (count first-list)))
+          last-name     (last-list (rand-int (count last-list)))]
+      [(first-name species-key) (last-name species-key)]))
+
+  (defn- name-input []
+    [:div.w-100
+     [:div.d-flex.flex-row.align-items-center.justify-content-end.w-100
+      [:div.mr-2 "名"]
+      [:input#cc-nature-name-first.nes-input.is-dark {:style         {:width "30vw" :height "5vw"}
+                                                      :type          "text"
+                                                      :placeholder   "First name"
+                                                      :default-value @*cur-first
+                                                      :on-blur       #(let [v (.. % -target -value)]
+                                                                        (reset! *cur-first v)
+                                                                        (set! (.. % -target -value) v))}]]
+     [:div.d-flex.flex-row.align-items-center.justify-content-end.w-100
+      [:div.mr-2 "姓"]
+      [:input#cc-nature-name-last.nes-input.is-dark {:style         {:width "30vw" :height "5vw"}
+                                                     :type          "text"
+                                                     :placeholder   "Last name"
+                                                     :default-value @*cur-last
+                                                     :on-blur       #(let [v (.. % -target -value)]
+                                                                       (reset! *cur-last v)
+                                                                       (set! (.. % -target -value) v))}]]
+     [:div.d-flex.flex-row.align-items-center.justify-content-end.w-100
+      [:button.nes-btn.is-primary
+       {:on-click
+        #(do (let [[rand-first rand-last] (random-name
+                                           @(rf/subscribe [::subs/cur-character-param [:gender]])
+                                           @(rf/subscribe [::subs/cur-character-param [:species]]))]
+               (when (str/blank? @*cur-first)
+                 (set! (-> js/document (.getElementById "cc-nature-name-first") .-value) rand-first))
+               (when (= "" @*cur-last)
+                 (set! (-> js/document (.getElementById "cc-nature-name-last") .-value) rand-last)))
+             (panel/show-modal :name-confirm))} "決定"]]])
+
+  (defn name-main []
+    (<load-name)
+    [:div#cc-nature-name.w-100.h-100.p-1
+     [:div.grid-container.w-100.h-100
+      ;; Header
+      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature-name :cc-nature-reason :right)} [:h3 "◁"]]
+      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "名前を決めてください"]]
+      ;; Panel
+      [:div.nes-container.is-dark.is-rounded.main
+       [:div.d-flex.flex-row.align-items-center.w-100.h-100
+        [profile-image]
+        [name-input]]]]
+     [panel/modal :name-confirm ["40vw" "60vw"]
+      [:div.nes-container.is-dark.is-rounded {:style {:width "30vw" :height "10vw"}}
+       [list/choice
+        :header [:h3 "これでいいですか？"]
+        :direction :horizontal
+        :choices [{:text     "はい"
+                   :on-click #(let [fname (-> js/document (.getElementById "cc-nature-name-first") .-value)
+                                    lname (-> js/document (.getElementById "cc-nature-name-last") .-value)]
+                                (rf/dispatch-sync [::events/set-character-param [:name :first] fname])
+                                (rf/dispatch-sync [::events/set-character-param [:name :last] lname]))}
+                  {:text "いいえ" :on-click #(panel/close-modal :name-confirm)}]]]]
+     [panel/modal :name-error ["20vw" "30vw"]
+      [:div.nes-container.is-dark.is-rounded {:style {:width "40vw"}}
+       [:h3 "アップロード可能なプロフィール画像の最大サイズは200KBです。"]
+       [:button.nes-btn.is-primary {:on-click #(panel/close-modal :name-error)}
+        "OK"]]]]))
+
+;;; Departure reason ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(do
+
+  (defonce *cur-reason (reagent/atom nil))
+  (defonce *reason-data (reagent/atom {}))
+
+  (defan- <load-reason []
+    (println "<load-reason")
+    (let [res (<! (http/<get-data "/cbb/departure-reason"))]
+      (reset! *reason-data (res :body))
+      true))
+
+  (defn- reason-detail []
+    (when-let [reason @*cur-reason]
+      [:div.nes-container.is-dark.is-rounded {:style {:width "90vw"}}
+       [:h3 reason]
+       [:hr]
+       [list/choice
+        :header [:h3 "これでいいですか？"]
+        :choices [{:text "はい"
+                   :on-click
+                   #(do (rf/dispatch-sync
+                         [::events/set-character-param [:nature :adolescence :departure-reason]
+                          {:title reason}])
+                        (container/switch-panels :cc-nature-reason :cc-nature-name :left))}
+                  {:text "いいえ" :on-click #(panel/close-modal :reason-detail)}]
+        :direction :horizontal]]))
+
+  (defn- reason-list []
+    [:div.nes-container.is-dark.is-rounded.experience-list
+     {:style {:width "50vw" :height "40vw"}}
+     [:div.overflow-auto.w-100.h-100
+      [list/choice
+       :choices (into []
+                      (for [reason (@*reason-data :冒険に出た理由)]
+                        ^{:key (reason :title)}
+                        {:text (reason :title) :on-click (fn []
+                                                           (reset! *cur-reason (:title reason))
+                                                           (panel/show-modal :reason-detail))}))]]])
+
+  (defn- random-reason []
+    (let [reasons (@*reason-data :冒険に出た理由)]
+      (:title (reasons (rand-int (count reasons))))))
+
+  (defn reason-main []
+    (<load-reason)
+    [:div#cc-nature-reason.w-100.h-100.p-1 {:style {:position "relative"}}
+     [:div.grid-container.w-100.h-100
+      ;; Header
+      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature-reason :cc-nature-adolescence :right)} [:h3 "◁"]]
+      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "冒険に出た理由を決定してください。"]]
+      ;; Body
+      [:div.nes-container.is-dark.is-rounded.w-100.h-100.selector
+       [list/choice
+        :choices [{:text "ランダム" :on-click (fn []
+                                                (reset! *cur-reason (random-reason))
+                                                (panel/show-modal :reason-detail))}
+                  {:text "自分で選ぶ" :on-click #(panel/show-modal :reason-experience-list)}]]]]
+     [panel/modal :reason-experience-list ["15vw" "35vw"] [reason-list]]
+     [panel/modal :reason-detail ["10vw" "5vw"] [reason-detail]]]))
 
 ;;; Happenings ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (do
 
-  (defonce *cur-happening1  (reagent/atom nil))
-  (defonce *cur-happening2  (reagent/atom nil))
+  (defonce *cur-happening  (reagent/atom nil))
   (defonce *sub-item        (reagent/atom nil))
   (defonce *happening-data (reagent/atom {}))
 
@@ -26,11 +231,19 @@
       (reset! *happening-data (res :body))
       true))
 
+  (def multiple-sweethearts
+    [(str (max (rand-int 6) 2) "人の異性")
+     (str (max (rand-int 6) 2) "人の同性")
+     (str (max (dec (rand-int 6)) 1) "人の異性と" (max (dec (rand-int 6)) 1) "人の同性")])
+
   (defn- happening-additional [happening]
     (let [key (case (happening :title)
-                "何者かにさらわれた"   :誰によって
-                "投獄されたことがある" :投獄の理由
-                "家族を失った"         :失った家族
+                "何者かにさらわれた"            :誰によって
+                "投獄されたことがある"          :投獄の理由
+                "家族を失った"                  :失った家族
+                "恋人/配偶者と悲しい別れをした" :別れ
+                "複数の相手と恋愛をしている"    :複数
+                "特定の装備を身につけられない"  :装備
                 nil)]
       (if key
         (do
@@ -38,30 +251,39 @@
           [list/choice
            :header [:h3 (str (name key) "：")]
            :direction :horizontal
-           :choices (into [] (for [item (happening key)]
-                               {:text     (item :title)
-                                :on-click #(reset! *sub-item (item :title))}))])
+           :choices (into [] (if (= key :複数) ; TODO why can't eval fuckfuckfuck
+                               (for [ms multiple-sweethearts]
+                                 {:text     ms
+                                  :on-click #(reset! *sub-item ms)})
+                               (for [item (happening key)]
+                                 {:text     (item :title)
+                                  :on-click #(reset! *sub-item (item :title))})))])
         [:div])))
 
-  (defn- happening1-result [happening]
+  (defn- happening-result [happening]
     {:title (str (happening :title) (when @*sub-item (str "（" @*sub-item "）")))})
 
-  (defn- happening1-detail [*target]
+  (defn- happening-detail
+    "period :infancy/:childhood"
+    [*target period]
     (when-let [happening @*target]
-      [:div.nes-container.is-dark.is-rounded {:style {:width "70vw"}}
-       [:h3 (happening :title)]
-       [:h4 (happening :description)]
-       (reset! *sub-item nil)
-       [happening-additional happening]
-       [:hr]
-       [list/choice
-        :header [:h3 "これでいいですか？"]
-        :choices [{:text "はい" :on-click #(do
-                                             (rf/dispatch-sync [::events/set-character-param [:nature :infancy :happening]
-                                                                (happening1-result happening)])
-                                             (container/switch-panels :cc-nature-happening1 :cc-nature-childhood :left))}
-                  {:text "いいえ" :on-click #(panel/close-modal :happening1-detail)}]
-        :direction :horizontal]]))
+      (let [move-from (keyword (str "cc-nature-happening-" (name period)))
+            move-to   (if (= period :infancy) :cc-nature-childhood :cc-nature-adolescence)]
+        [:div.nes-container.is-dark.is-rounded {:style {:width "70vw"}}
+         [:h3 (happening :title)]
+         [:h4 (happening :description)]
+         (reset! *sub-item nil)
+         [happening-additional happening]
+         [:hr]
+         [list/choice
+          :header [:h3 "これでいいですか？"]
+          :choices [{:text     "はい"
+                     :on-click #(do (rf/dispatch-sync [::events/set-character-param [:nature period :happening]
+                                                       (happening-result happening)])
+                                    (panel/close-modal :happening-detail)
+                                    (container/switch-panels move-from move-to :left))}
+                    {:text "いいえ" :on-click #(panel/close-modal :happening-detail)}]
+          :direction :horizontal]])))
 
   (defn- fortune-list [*target]
     [:div.nes-container.is-dark.is-rounded.experience-list {:style {:width "90vw" :height "30vw"}}
@@ -72,7 +294,7 @@
                         ^{:key (fortune :title)}
                         {:text (fortune :title) :on-click (fn []
                                                             (reset! *target fortune)
-                                                            (panel/show-modal :happening1-detail))}))]]])
+                                                            (panel/show-modal :happening-detail))}))]]])
 
   (defn- tragedy-list [*target]
     [:div.nes-container.is-dark.is-rounded.experience-list {:style {:width "90vw" :height "30vw"}}
@@ -83,7 +305,7 @@
                         ^{:key (tragedy :title)}
                         {:text (tragedy :title) :on-click (fn []
                                                             (reset! *target tragedy)
-                                                            (panel/show-modal :happening1-detail))}))]]])
+                                                            (panel/show-modal :happening-detail))}))]]])
 
   (defn- love-list [*target]
     [:div.nes-container.is-dark.is-rounded.experience-list {:style {:width "90vw" :height "30vw"}}
@@ -94,7 +316,7 @@
                         ^{:key (love :title)}
                         {:text (love :title) :on-click (fn []
                                                          (reset! *target love)
-                                                         (panel/show-modal :happening1-detail))}))]]])
+                                                         (panel/show-modal :happening-detail))}))]]])
 
   (defn- secret-list [*target]
     [:div.nes-container.is-dark.is-rounded.experience-list {:style {:width "90vw" :height "30vw"}}
@@ -105,80 +327,155 @@
                         ^{:key (secret :title)}
                         {:text (secret :title) :on-click (fn []
                                                            (reset! *target secret)
-                                                           (panel/show-modal :happening1-detail))}))]]])
+                                                           (panel/show-modal :happening-detail))}))]]])
 
-  (defn- random-happening1 []
-    (let [happenings (concat (@*happening-data :幸運・幸福)
-                             (@*happening-data :事故や悲劇)
-                             (repeat (count (@*happening-data :幸運・幸福)) {:title "特になし"}))]
-      (nth happenings (rand-int (count happenings)))))
+  (defn- random-happening [period]
+    (let [target-keys (if (= period :infancy)
+                        [:幸運・幸福 :事故や悲劇]
+                        [:幸運・幸福 :事故や悲劇 :恋愛 :秘密の背景])
+          *targets    (atom (apply concat (for [k target-keys] (@*happening-data k))))]
+      (when (= period :infancy)
+        (swap! *targets concat (repeat (/ (count @*targets) 2) {:title "特になし"})))
+      (nth @*targets (rand-int (count @*targets)))))
 
-  (defn- happening1-type []
+  (defn- happening-set [period]
     [:div.nes-container.is-dark.is-rounded
      [list/choice
-      :choices [{:text "幸運・幸福" :on-click #(panel/show-modal :happening1-fortune-list)}
-                {:text "特になし" :on-click #(do
-                                               (reset! *cur-happening1 {:title "特になし"})
-                                               (panel/show-modal :happening1-detail))}
-                {:text "事故や悲劇" :on-click #(panel/show-modal :happening1-tragedy-list)}]]])
+      :choices (vec (let [base      [{:text "幸運・幸福" :on-click #(panel/show-modal :happening-fortune-list)}
+                                     {:text "事故や悲劇" :on-click #(panel/show-modal :happening-tragedy-list)}]
+                          infancy   [{:text "特になし" :on-click #(do (reset! *cur-happening {:title "特になし"})
+                                                                      (panel/show-modal :happening-detail))}]
+                          childhood [{:text "恋愛" :on-click #(panel/show-modal :happening-love-list)}
+                                     {:text "秘密の背景" :on-click #(panel/show-modal :happening-secret-list)}]]
+                      (cond-> base
+                        (= period :infancy)   (concat ,, infancy)
+                        (= period :childhood) (concat ,, childhood))))]])
 
-  (defn- happening2-type []
-    [:div.nes-container.is-dark.is-rounded
-     [list/choice
-      :choices [{:text "幸運・幸福" :on-click #(panel/show-modal :happening2-fortune-list)}
-                {:text "事故や悲劇" :on-click #(panel/show-modal :happening2-tragedy-list)}
-                {:text "恋愛" :on-click #(panel/show-modal :happening2-love-list)}
-                {:text "秘密の背景" :on-click #(panel/show-modal :happening2-tragedy-list)}
-                ]]])
-
-  (defn happening1-main []
+  (defn happening-main
+    "period :infancy/:childhood"
+    [period]
     (<load-happening)
-    [:div#cc-nature-happening1.w-100.h-100.p-1 {:style {:position "relative"}}
+    [:div#cc-nature-happening.w-100.h-100.p-1 {:style {:position "relative"}}
      [:div.grid-container.w-100.h-100
       ;; Header
-      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature-happening1 :cc-nature-infancy :right)} [:h3 "◁"]]
-      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "幼少期に起きたハプニングを決定してください"]]
+      [:button.nes-btn.aux-left {:on-click #(container/switch-panels
+                                             (keyword (str "cc-nature-happening-" (name period)))
+                                             (keyword (str "cc-nature-" (name period)))
+                                             :right)} [:h3 "◁"]]
+      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title
+       [:h3 (str (if (= period :infancy) "幼少期" "少年期") "に起きたハプニングを決定してください")]]
       ;; Body
       [:div.nes-container.is-dark.is-rounded.w-100.h-100.selector
        [list/choice
         :choices [{:text "ランダム" :on-click (fn []
-                                                (reset! *cur-happening1 (random-happening1))
-                                                (panel/show-modal :happening1-detail))}
-                  {:text "自分で選ぶ" :on-click #(panel/show-modal :happening1-type)}]]]]
-     [panel/modal :happening1-type ["18vw" "30vw"] [happening2-type]]
-     [panel/modal :happening1-fortune-list ["15vw" "5vw"] [fortune-list *cur-happening1]]
-     [panel/modal :happening1-tragedy-list ["15vw" "5vw"] [tragedy-list *cur-happening1]]
-     [panel/modal :happening1-detail ["20vw" "15vw"] [happening1-detail *cur-happening1]]
-     ])
+                                                (reset! *cur-happening (random-happening period))
+                                                (panel/show-modal :happening-detail))}
+                  {:text "自分で選ぶ" :on-click #(panel/show-modal :happening-set)}]]]]
+     [panel/modal :happening-set          ["18vw" "30vw"] [happening-set period]]
+     [panel/modal :happening-fortune-list ["15vw" "5vw"]  [fortune-list *cur-happening]]
+     [panel/modal :happening-tragedy-list ["15vw" "5vw"]  [tragedy-list *cur-happening]]
+     [panel/modal :happening-love-list    ["15vw" "5vw"]  [love-list *cur-happening]]
+     [panel/modal :happening-secret-list  ["15vw" "5vw"]  [secret-list *cur-happening]]
+     [panel/modal :happening-detail       ["20vw" "15vw"] [happening-detail *cur-happening period]]]))
 
-  (defn- random-happening2 []
-    )
+;;; Adolescence ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  (defn- happening2-detail []
-    )
+(do
 
-  (defn happening2-main []
-    (<load-happening)
-    [:div#cc-nature-happening2.w-100.h-100.p-1 {:style {:position "relative"}}
+  (defonce *cur-adolescence (reagent/atom nil))
+  (defonce *adolescence-data (reagent/atom {}))
+  (defonce *proficiency (reagent/atom nil))
+
+  (defan- <load-adolescence []
+    (println "<load-adolescence")
+    (let [res (<! (http/<get-data "/cbb/adolescence"))]
+      (reset! *adolescence-data (res :body))
+      true))
+
+  (defn- equipment-proficiency [candidates]
+    [:div
+     [:hr]
+     [list/choice
+      :header [:h4 "習熟対象："]
+      :direction :horizontal
+      :choices-size :h4
+      :choices (into [] (for [c candidates]
+                          {:text     (c :title)
+                           :on-click #(reset! *proficiency (c :title))}))]])
+
+  (defn- adolescence-sub [adolescence]
+    (when-let [candidates (or (adolescence :武器)
+                              (adolescence :防具))]
+      (reset! *proficiency (:title (first candidates)))
+      [equipment-proficiency candidates]))
+
+  (defn- adolescence-detail []
+    (when-let [adolescence @*cur-adolescence]
+      [:div.nes-container.is-dark.is-rounded {:style {:width "90vw"}}
+       [:h3 (adolescence :title)]
+       [:h4 (str "習得戦闘特技：" (or (adolescence :skill) "-"))]
+       [adolescence-sub adolescence]
+       [:h4 (adolescence :description)]
+       [:hr]
+       [list/choice
+        :header [:h3 "これでいいですか？"]
+        :choices [{:text "はい"
+                   :on-click
+                   #(do (rf/dispatch-sync
+                         [::events/set-character-param [:nature :adolescence :event]
+                          {:title       (adolescence :title)
+                           :description (adolescence :description)}])
+                        (rf/dispatch-sync [::events/set-character-param [:skills]
+                                           [(str/replace (adolescence :skill) #"\*\*" (or @*proficiency ""))]])
+                        (container/switch-panels :cc-nature-adolescence :cc-nature-reason :left))}
+                  {:text "いいえ" :on-click #(panel/close-modal :adolescence-detail)}]
+        :direction :horizontal]]))
+
+  (defn- adolescence-keys [job type]
+    (if (= "遠隔支援系" (const/job->category job))
+      [(keyword job)]
+      [(keyword job) (keyword type)]))
+
+  (defn- adolescence-list []
+    [:div.nes-container.is-dark.is-rounded.experience-list
+     {:style {:width "50vw" :height "40vw"}}
+     [:div.overflow-auto.w-100.h-100
+      [list/choice
+       :choices (into []
+                      (for [adolescence
+                            (get-in @*adolescence-data
+                                    (adolescence-keys
+                                     @(rf/subscribe [::subs/cur-character-param [:job]])
+                                     @(rf/subscribe [::subs/cur-character-param [:nature :infancy :event :type]])))]
+                        ^{:key (adolescence :title)}
+                        {:text (adolescence :title) :on-click (fn []
+                                                                (reset! *cur-adolescence adolescence)
+                                                                (panel/show-modal :adolescence-detail))}))]]])
+
+  (defn- random-adolescence []
+    (let [adolescences (get-in @*adolescence-data
+                               (adolescence-keys
+                                @(rf/subscribe [::subs/cur-character-param [:job]])
+                                @(rf/subscribe [::subs/cur-character-param [:nature :infancy :event :type]])))]
+      (adolescences (rand-int (count adolescences)))))
+
+  (defn adolescence-main []
+    (<load-adolescence)
+    [:div#cc-nature-adolescence.w-100.h-100.p-1 {:style {:position "relative"}}
      [:div.grid-container.w-100.h-100
       ;; Header
-      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature-happening2 :cc-nature-infancy :right)} [:h3 "◁"]]
-      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "少年期に起きたハプニングを決定してください"]]
+      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature-adolescence :cc-nature-happening-childhood :right)} [:h3 "◁"]]
+      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "青年期の経験を決定してください"]]
       ;; Body
       [:div.nes-container.is-dark.is-rounded.w-100.h-100.selector
        [list/choice
         :choices [{:text "ランダム" :on-click (fn []
-                                                (reset! *cur-happening2 (random-happening2))
-                                                (panel/show-modal :happening2-detail))}
-                  {:text "自分で選ぶ" :on-click #(panel/show-modal :happening2-type)}]]]]
-     [panel/modal :happening2-type ["18vw" "30vw"] [happening2-type]]
-     [panel/modal :happening2-fortune-list ["15vw" "5vw"] [fortune-list]]
-     [panel/modal :happening2-tragedy-list ["15vw" "5vw"] [tragedy-list]]
-     [panel/modal :happening2-love-list ["15vw" "5vw"] [love-list]]
-     [panel/modal :happening2-secret-list ["15vw" "5vw"] [secret-list]]
-     [panel/modal :happening2-detail ["20vw" "15vw"] [happening2-detail]]
-     ])
-  )
+                                                (reset! *cur-adolescence (random-adolescence))
+                                                (panel/show-modal :adolescence-detail))}
+                  {:text "自分で選ぶ" :on-click #(panel/show-modal :adolescence-experience-list)}]]]]
+     [panel/modal :adolescence-experience-list ["15vw" "35vw"] [adolescence-list]]
+     [panel/modal :adolescence-detail ["10vw" "5vw"] [adolescence-detail]]
+     ]))
 
 ;;; Childhood ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -210,6 +507,7 @@
     (when-let [childhood @*cur-childhood]
       [:div.nes-container.is-dark.is-rounded {:style {:width "90vw"}}
        [:h3 (childhood :title)]
+       [:h4 (str "習得技能：" (or (childhood :ability) "-"))]
        [:h4 (childhood :description)]
        (reset! *language nil)
        (when-let [languages (childhood :言語)]
@@ -218,14 +516,20 @@
        [:hr]
        [list/choice
         :header [:h3 "これでいいですか？"]
-        :choices [{:text "はい" :on-click #(do
-                                             (rf/dispatch-sync
-                                              [::events/set-character-param [:nature :childhood :event]
-                                               {:title       (childhood :title)
-                                                :description (childhood :description)}])
-                                             (when @*language
-                                               (rf/dispatch-sync [::events/set-character-param [:languages]
-                                                                  [@*language]])))}
+        :choices [{:text "はい"
+                   :on-click
+                   #(do (rf/dispatch-sync
+                         [::events/set-character-param [:nature :childhood :event]
+                          {:title       (childhood :title)
+                           :description (childhood :description)}])
+                        (rf/dispatch-sync [::events/set-character-param [:abilities]
+                                           (if-let [ability (childhood :ability)]
+                                             {ability 1}
+                                             {})])
+                        (when @*language
+                          (rf/dispatch-sync [::events/set-character-param [:languages]
+                                             [@*language]]))
+                        (container/switch-panels :cc-nature-childhood :cc-nature-happening-childhood :left))}
                   {:text "いいえ" :on-click #(panel/close-modal :childhood-detail)}]
         :direction :horizontal]]))
 
@@ -256,7 +560,7 @@
     [:div#cc-nature-childhood.w-100.h-100.p-1 {:style {:position "relative"}}
      [:div.grid-container.w-100.h-100
       ;; Header
-      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature-childhood :cc-nature-job :right)} [:h3 "◁"]]
+      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature-childhood :cc-nature-happening-infancy :right)} [:h3 "◁"]]
       [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "少年期の経験を決定してください"]]
       ;; Body
       [:div.nes-container.is-dark.is-rounded.w-100.h-100.selector
@@ -285,7 +589,8 @@
   (defn- set-infancy-to-cur-character [infancy]
     (rf/dispatch-sync [::events/set-character-param [:nature :infancy :event]
                        {:title       (infancy :title)
-                        :description (infancy :description)}])
+                        :description (infancy :description)
+                        :type        (infancy :type)}])
     (rf/dispatch-sync [::events/set-character-param [:parameters :initial :dex] (infancy :A)])
     (rf/dispatch-sync [::events/set-character-param [:parameters :initial :agi] (infancy :B)])
     (rf/dispatch-sync [::events/set-character-param [:parameters :initial :str] (infancy :C)])
@@ -307,7 +612,7 @@
         :header [:h3 "これでいいですか？"]
         :choices [{:text "はい" :on-click #(do
                                              (set-infancy-to-cur-character infancy)
-                                             (container/switch-panels :cc-nature-infancy :cc-nature-happening1 :left))}
+                                             (container/switch-panels :cc-nature-infancy :cc-nature-happening-infancy :left))}
                   {:text "いいえ" :on-click #(panel/close-modal :infancy-detail)}]
         :direction :horizontal]]))
 
@@ -361,10 +666,10 @@
 
 (do
 
-  (defonce *human-noble       (reagent/atom ""))
-  (defonce *nightmare-origin  (reagent/atom ""))
-  (defonce *nightmare-freedom (reagent/atom ""))
-  (defonce *lycant-head       (reagent/atom ""))
+  (defonce *human-noble       (reagent/atom nil))
+  (defonce *nightmare-origin  (reagent/atom nil))
+  (defonce *nightmare-freedom (reagent/atom nil))
+  (defonce *lycant-head       (reagent/atom nil))
   (defonce *cur-born          (reagent/atom nil))
   (defonce *born-data         (reagent/atom {}))
 
@@ -372,7 +677,6 @@
     (println "<load-born")
     (let [res (<! (http/<get-data "/cbb/born"))]
       (reset! *born-data (res :body))
-      (println (res :body))
       true))
 
   ;; Options
@@ -393,8 +697,7 @@
     (when (and (= @(rf/subscribe [::subs/cur-character-param [:species]]) "人間")
                (= (born :title) "貴族(都市)"))
       [:div
-       ;; TODO :人間-貴族 を変更（both FE & BE）
-       (when-let [reasons (born :人間-貴族)]
+       (when-let [reasons (born :貴族)]
          (reset! *human-noble (first reasons))
          [human-noble reasons])]))
 
