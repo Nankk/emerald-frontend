@@ -1,5 +1,6 @@
 (ns emerald-frontend.components.panel
-  (:require [reagent.core :as reagent]))
+  (:require [clojure.walk :as walk]
+            [reagent.core :as reagent]))
 
 ;;; Test panel ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -31,14 +32,21 @@
 (defn close-modal [key]
   (swap! *modal-state assoc-in [key :display] "none"))
 
+(defn close-all-modals []
+  (swap! *modal-state
+         (fn [state]
+           (walk/postwalk #(if (and (map? %) (% :display))
+                             (assoc % :display "none")
+                             %) state))))
+
 (defn show-modal [key]
   (swap! *modal-state assoc-in [key :display] "block")
   (println "showed, map is" @*modal-state))
 
-(defn- backdropper [modal-key z-idx]
+(defn- backdropper [modal-key z-idx rigid?]
   (let [display (get-in @*modal-state [modal-key :display])]
     (println "backdropper-display" display)
-    [:div {:on-click #(close-modal modal-key)
+    [:div {:on-click #(when-not rigid? (close-modal modal-key))
            :style {:display display
                    :z-index z-idx
                    :position "absolute"
@@ -56,10 +64,13 @@
                    :position "absolute"
                    :top top
                    :left left}}
-     (into [:div] body)]))
+     body]))
 
-(defn modal [key pos & body]
-  (swap! *modal-state assoc key {:display "none"})
-  [:div
-   [backdropper key (next-zidx)]
-   [modal-body key pos (next-zidx) body]])
+(defn modal
+  ([key pos body] (modal key pos nil body))
+  ([key pos options body]
+   (let [{:keys [backdropper-rigid?]} options]
+     (swap! *modal-state assoc key {:display "none"})
+     [:div
+      [backdropper key (next-zidx) backdropper-rigid?]
+      [modal-body key pos (next-zidx) body]])))

@@ -12,12 +12,15 @@
             [emerald-frontend.style.colors :as colors]
             [emerald-frontend.subs :as subs]
             [emerald-frontend.util.http :as http]
+            [cljs-http.client :as client]
             [re-frame.core :as rf]
             [reagent.core :as reagent]))
 
 ;;; Confirmation ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (do
+
+  (defonce *errors (atom nil))
 
   (defn- character-formatted
     "Returns a formatted character for character storage server.
@@ -26,13 +29,16 @@
     (cond-> character
       (re-find #"ナイトメア" (character :species))
       (update ,, :languages concat
-                 (:languages (first (filter #(= (% :name) ((re-find #"（(.+)）" (character :species)) 1)) const/species-list))))
+                 (:languages (first (filter #(= (% :name) (get (re-find #"（(.+)）" (character :species)) 1)) const/species-list))))
 
       true
-      (update-in ,, [:languages] concat (get-in character [:additional-items :languages]))
+      (update ,, :languages concat (get-in character [:additional-items :languages]))
 
       true
-      (update-in ,, [:abilities] merge (get-in character [:additional-items :abilities]))))
+      (update ,, :abilities merge (get-in character [:additional-items :abilities]))
+
+      true
+      (dissoc ,, :additional-items)))
 
   (defn- confirmation-biography [character]
     (let [{{{btitle :title bdesc :description}                                             :born
@@ -141,6 +147,18 @@
            [:h6 (str "精神 " (+ pow mind))]
            [:h6 (str "敏捷 " (+ agi technique))]]])]]])
 
+  (defan- register-character-to-server [character-formatted]
+    (cljs.pprint/pprint character-formatted)
+    (panel/show-modal :confirmation-register)
+    (let [res (<! (http/<post-character character-formatted))]
+      (println "応答" res)
+      (panel/close-modal :confirmation-register)
+      (if (= (res :status) 200)
+        (panel/show-modal :confirmation-complete)
+        (do (reset! *errors res)
+            (panel/show-modal :confirmation-failure)))
+      true))
+
   (defn confirmation-main []
     (let [transient @(rf/subscribe [::subs/cur-character])
           character (character-formatted transient)]
@@ -152,14 +170,31 @@
          [list/choice
           :direction :horizontal
           :choices-size :h4
-          :choices [{:text "オッケー" :on-click #()}
+          :choices [{:text "オッケー" :on-click #(register-character-to-server character)}
                     {:text "待った" :on-click #(container/switch-panels :cc-nature-confirmation :cc-nature-name :right)}]]]
         ;; Panel
         [:div.nes-container.is-dark.is-rounded.main
          [:div.inner-grid-container.w-100.h-100
           [confirmation-params character]
           [confirmation-skills character]
-          [confirmation-biography character]]]]])))
+          [confirmation-biography character]]]]
+       [panel/modal :confirmation-register ["20vw" "35vw"] {:backdropper-rigid? true}
+        [:div.nes-container.is-dark.is-rounded
+         [:h3 "キャラクターを登録しています…"]]]
+       [panel/modal :confirmation-complete ["20vw" "35vw"] {:backdropper-rigid? true}
+        [:div.nes-container.is-dark.is-rounded
+         [:h3 "作成が完了しました！"]
+         [:div.d-flex.flex-row.align-items-center.justify-content-center.w-100
+          [:button.nes-btn.is-primary {:on-click #(do (panel/close-all-modals)
+                                                      (rf/dispatch-sync [::events/initialize-db])
+                                                      (container/switch-panels :cc-nature-confirmation :home :down))}
+           "OK"]]]]
+       [panel/modal :confirmation-failure ["20vw" "35vw"]
+        [:div.nes-container.is-dark.is-rounded
+         [:h3 "作成に失敗しました。"]
+         [:h6 @*errors]
+         [:button.nes-btn.is-primary {:on-click #(panel/close-modal :confirmation-failure)}
+          "OK"]]]])))
 
 ;;; Name ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -208,7 +243,9 @@
      ])
 
   (defn- random-name [gender species]
-    (let [exact-species (if-not (re-find #"ナイトメア" species) species ((re-find #"（(.+)）" species) 1))
+    (let [exact-species (if (re-find #"ナイトメア" species)
+                          ((re-find #"（(.+)）" species) 1)
+                          (str/replace species #"（.+）" ""))
           species-key   (keyword (get-in @*name-data [:種族 0 (keyword exact-species)]))
           first-list    (@*name-data (if (= gender "male") :男性名 :女性名))
           last-list     (@*name-data :姓)
@@ -399,6 +436,15 @@
   (defn- happening-result [happening]
     {:title (str (happening :title) (when @*sub-item (str "（" @*sub-item "）")))})
 
+  (defn- close-all-modals []
+    (doseq [key [:happening-detail
+                 :happening-fortune-list
+                 :happening-love-list
+                 :happening-secret-list
+                 :happening-set
+                 :happening-tragedy-list]]
+      (panel/close-modal key)))
+
   (defn- happening-detail
     "period :infancy/:childhood"
     [*target period]
@@ -416,7 +462,7 @@
           :choices [{:text     "はい"
                      :on-click #(do (rf/dispatch-sync [::events/set-character-param [:nature period :happening]
                                                        (happening-result happening)])
-                                    (panel/close-modal :happening-detail)
+                                    (close-all-modals)
                                     (container/switch-panels move-from move-to :left))}
                     {:text "いいえ" :on-click #(panel/close-modal :happening-detail)}]
           :direction :horizontal]])))
@@ -760,9 +806,7 @@
                       (for [infancy (@*infancy-data
                                      (keyword
                                       (str (let [species @(rf/subscribe [::subs/cur-character-param [:species]])]
-                                             (if (re-find #"ナイトメア" species)
-                                               "ナイトメア"
-                                               species))
+                                             (str/replace species #"（.+）" ""))
                                            "-"
                                            (const/job->category
                                             @(rf/subscribe [::subs/cur-character-param [:job]])))))]
@@ -775,9 +819,7 @@
     (let [infancies (@*infancy-data
                      (keyword
                       (str (let [species @(rf/subscribe [::subs/cur-character-param [:species]])]
-                             (if (re-find #"ナイトメア" species)
-                               "ナイトメア"
-                               species))
+                             (str/replace species #"（.+）" ""))
                            "-"
                            (const/job->category
                             @(rf/subscribe [::subs/cur-character-param [:job]])))))]
@@ -799,7 +841,7 @@
                   {:text "自分で選ぶ" :on-click #(panel/show-modal :infancy-experience-list)}]]]
       [panel/modal :infancy-experience-list ["15vw" "35vw"]
        [infancy-list]]]
-     [panel/modal :infancy-detail ["20vw" "15vw"]
+     [panel/modal :infancy-detail ["10vw" "15vw"]
       [infancy-detail]]
      ]))
 

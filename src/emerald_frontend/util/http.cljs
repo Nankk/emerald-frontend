@@ -16,3 +16,10 @@
     ;; (->> data
     ;;      (transform-keys #(->kebab-case-keyword % :separator \_) ,,))
     ))
+
+(defan <post-character [character-formatted]
+  (let [url (str const/server-url "/characters/")
+        res (<! (http/post url {:json-params character-formatted
+                                :with-credentials? false
+                                :keywordize-keys false}))]
+    res))

@@ -7,7 +7,7 @@
 
 (defn- panels []
   [container/transient-container
-   :cc-nature-name
+   :home
    {:home                          [home/main]
     :cc-nature-species             [nature/species-main]
     :cc-nature-job                 [nature/job-main]
