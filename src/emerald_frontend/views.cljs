@@ -27,6 +27,4 @@
    [:div#main-panel {:style
                      {:width  (str @(rf/subscribe [::subs/panel-width]) "px")
                       :height (str @(rf/subscribe [::subs/panel-height]) "px")}}
-    [panels]
-    ;; [nature/adolescence-main]
-    ]])
+    [panels]]])

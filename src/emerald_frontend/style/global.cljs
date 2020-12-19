@@ -49,7 +49,7 @@
 
    ;; For nes components
    [:.nes-container.is-rounded {:margin "0px"
-                                :padding "1vw 2vw"}]
+                                :padding "1vw"}]
    [:label {:margin "0px"}]
    [:input :.nes-input :.is-dark {:padding "0vw 1vw"}]
    ))

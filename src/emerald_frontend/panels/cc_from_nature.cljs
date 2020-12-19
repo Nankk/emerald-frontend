@@ -1,5 +1,6 @@
 (ns emerald-frontend.panels.cc-from-nature
-  (:require [cljs.core.async :refer [<! go]]
+  (:require [async-interop.interop :refer-macros [<p!]]
+            [cljs.core.async :refer [<! go]]
             [cljs.reader :as reader]
             [clojure.string :as str]
             [emerald-frontend.components.container :as container]
@@ -8,9 +9,9 @@
             [emerald-frontend.const :as const]
             [emerald-frontend.events :as events]
             [emerald-frontend.macros.async :refer [defan defan-]]
+            [emerald-frontend.style.colors :as colors]
             [emerald-frontend.subs :as subs]
             [emerald-frontend.util.http :as http]
-            [async-interop.interop :refer-macros [<p!]]
             [re-frame.core :as rf]
             [reagent.core :as reagent]))
 
@@ -18,27 +19,153 @@
 
 (do
 
-  (defn confirmation-main []
-    [:div#cc-nature-confirmation.w-100.h-100.p-1
-     [:div.grid-container.w-100.h-100
-      ;; Header
-      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "これでいいですか？"]]
-      ;; Panel
-      [:div.nes-container.is-dark.is-rounded.main
-       [:div.d-flex.flex-row.align-items-center.w-100.h-100
-        [:div "aaa"]]]]])
+  (defn- character-formatted
+    "Returns a formatted character for character storage server.
+    :additional-items are merged into main status and removed."
+    [character]
+    (cond-> character
+      (re-find #"ナイトメア" (character :species))
+      (update ,, :languages concat
+                 (:languages (first (filter #(= (% :name) ((re-find #"（(.+)）" (character :species)) 1)) const/species-list))))
 
-  )
+      true
+      (update-in ,, [:languages] concat (get-in character [:additional-items :languages]))
+
+      true
+      (update-in ,, [:abilities] merge (get-in character [:additional-items :abilities]))))
+
+  (defn- confirmation-biography [character]
+    (let [{{{btitle :title bdesc :description}                                             :born
+            {{ititle :title idesc :description} :event {ihappen :title} :happening}        :infancy
+            {{ctitle :title cdesc :description} :event {chappen :title} :happening}        :childhood
+            {{atitle :title adesc :description} :event {areason :title} :departure-reason} :adolescence} :nature}
+          ;; Deep-nested binding
+          character]
+      [:div.biography.w-100.h-100.overflow-auto
+       [:div.nes-container.is-dark.is-rounded
+        [:div
+         [:h5 (str "生まれ：" btitle)]
+         [:hr]
+         [:h6 bdesc]
+         [:h6 "　"]
+         [:h5 (str "幼少期：" ititle)]
+         [:hr]
+         [:h6 idesc]
+         [:h6 "　"]
+         [:h5 (str "幼少期のハプニング")]
+         [:hr]
+         [:h6 ihappen]
+         [:h6 "　"]
+         [:h5 (str "少年期：" ctitle)]
+         [:hr]
+         [:h6 cdesc]
+         [:h6 "　"]
+         [:h5 (str "少年期のハプニング")]
+         [:hr]
+         [:h6 chappen]
+         [:h6 "　"]
+         [:h5 (str "青年期：" atitle)]
+         [:hr]
+         [:h6 adesc]
+         [:h6 "　"]
+         [:h5 "冒険に出た理由"]
+         [:hr]
+         [:h6 areason]]]]))
+
+  (defn- confirmation-skills [character]
+    [:div.skills.w-100.h-100
+     [:div.nes-container.is-dark.is-rounded.w-100.h-100.d-flex.flex-row
+      [:div {:style {:width        "33%"
+                     :border-right (str "0.4vw solid " (colors/base 10))}}
+       [:h5 "技能"]
+       [:hr]
+       (into [:div]
+             (for [ability (character :abilities)]
+               [:div.d-flex.flex-row.justify-content-between.w-100
+                [:h6 (ability 0)]
+                [:h6 (str "Lv " (ability 1))]]))]
+      [:div {:style {:width        "33%"
+                     :border-right (str "0.4vw solid " (colors/base 10))}}
+       [:h5 "戦闘特技"]
+       [:hr]
+       (into [:div]
+             (for [skill (character :skills)]
+               [:h6 skill]))]
+      [:div {:style {:width        "33%"}}
+       [:h5 "言語"]
+       [:hr]
+       (into [:div]
+             (for [language (character :languages)]
+               [:h6 (str (language :title) " [" (when (language :oral) "話") (when (language :literal) "読") "]")]))]]])
+
+  (defn- confirmation-params [character]
+    [:div.params.w-100.h-100
+     [:div.nes-container.is-dark.is-rounded.w-100.h-100.d-flex.flex-row
+      [:div.nes-container.is-dark.is-rounded {:style {:width    "15vw"     :height  "15vw"
+                                                      :position "relative" :padding "1vw"}}
+       ;; Picture area
+       (if-let [image (character :image)]
+         [:img.profile-image.w-100.h-100 {:src (str "data:" (image :type) ";base64," (image :base64))}]
+         [:div "I am a default image!"])]
+      [:div
+       (let [{fname :first mname :middle lname :last} (character :name)
+             {:keys [job species]}                    character]
+         [:div
+          [:h5 (str fname
+                    (when-not (empty? mname) (str "・" mname))
+                    (when-not (empty? lname) (str "・" lname))
+                    " (" (character :age) ")")]
+          [:h6 (str "[ " species "の" job " ]")]])
+       (let [{{{:keys [technique physique mind]}      :base
+               {stg :str :keys [dex agi con int pow]} :initial} :parameters}
+             character
+             lv             (apply max (vals (character :abilities)))
+             hp             (+ (+ physique con) (* lv 3))
+             magic-lv-total (reduce + (get (filter #(some #{(% 0)} const/magical-skills) (character :abilities)) 1))
+             mp             (+ (+ mind pow) (* magic-lv-total 3))
+             exp            (- (character :exp) (* (count (character :additional-abilities)) 500))]
+         [:div.d-flex.flex-row.justify-content-between.w-100
+          [:div.mr-2
+           [:h6 (str "Lv " lv)]
+           [:h6 (str "HP " hp "/" hp)]
+           [:h6 (str "MP " mp "/" mp)]
+           [:h6 (str "Exp " exp)]]
+          [:div
+           [:h6 "　"]
+           [:h6 (str "筋力 " (+ stg physique))]
+           [:h6 (str "知力 " (+ int mind))]
+           [:h6 (str "器用 " (+ dex technique))]]
+          [:div
+           [:h6 "　"]
+           [:h6 (str "生命 " (+ con physique))]
+           [:h6 (str "精神 " (+ pow mind))]
+           [:h6 (str "敏捷 " (+ agi technique))]]])]]])
+
+  (defn confirmation-main []
+    (let [transient @(rf/subscribe [::subs/cur-character])
+          character (character-formatted transient)]
+      [:div#cc-nature-confirmation.w-100.h-100.p-1
+       [:div.grid-container.w-100.h-100
+        ;; Header
+        [:div.nes-container.is-dark.is-rounded.w-100.title.d-flex.flex-row.justify-content-center.align-items-center
+         [:h3 "このキャラクターを作成します"]
+         [list/choice
+          :direction :horizontal
+          :choices-size :h4
+          :choices [{:text "オッケー" :on-click #()}
+                    {:text "待った" :on-click #(container/switch-panels :cc-nature-confirmation :cc-nature-name :right)}]]]
+        ;; Panel
+        [:div.nes-container.is-dark.is-rounded.main
+         [:div.inner-grid-container.w-100.h-100
+          [confirmation-params character]
+          [confirmation-skills character]
+          [confirmation-biography character]]]]])))
 
 ;;; Name ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (do
 
   (defonce *name-data (atom {}))
-
-  ;; Only for blank check
-  (defonce *cur-first (atom ""))
-  (defonce *cur-last (atom ""))
 
   (defan- <load-name []
     (println "<load-name")
@@ -80,13 +207,8 @@
         [:div "I am a default image!"])]
      ])
 
-  (defn- exact-species [species born]
-    (if-not (= species "ナイトメア")
-      species
-      ((re-find #"（出自：(.+)）" born) 1)))
-
   (defn- random-name [gender species]
-    (let [exact-species (exact-species species @(rf/subscribe [::subs/cur-character-param [:nature :born :title]]))
+    (let [exact-species (if-not (re-find #"ナイトメア" species) species ((re-find #"（(.+)）" species) 1))
           species-key   (keyword (get-in @*name-data [:種族 0 (keyword exact-species)]))
           first-list    (@*name-data (if (= gender "male") :男性名 :女性名))
           last-list     (@*name-data :姓)
@@ -95,36 +217,50 @@
       [(first-name species-key) (last-name species-key)]))
 
   (defn- name-input []
-    [:div.w-100
-     [:div.d-flex.flex-row.align-items-center.justify-content-end.w-100
-      [:div.mr-2 "名"]
-      [:input#cc-nature-name-first.nes-input.is-dark {:style         {:width "30vw" :height "5vw"}
-                                                      :type          "text"
-                                                      :placeholder   "First name"
-                                                      :default-value @*cur-first
-                                                      :on-blur       #(let [v (.. % -target -value)]
-                                                                        (reset! *cur-first v)
-                                                                        (set! (.. % -target -value) v))}]]
-     [:div.d-flex.flex-row.align-items-center.justify-content-end.w-100
-      [:div.mr-2 "姓"]
-      [:input#cc-nature-name-last.nes-input.is-dark {:style         {:width "30vw" :height "5vw"}
-                                                     :type          "text"
-                                                     :placeholder   "Last name"
-                                                     :default-value @*cur-last
-                                                     :on-blur       #(let [v (.. % -target -value)]
-                                                                       (reset! *cur-last v)
-                                                                       (set! (.. % -target -value) v))}]]
-     [:div.d-flex.flex-row.align-items-center.justify-content-end.w-100
-      [:button.nes-btn.is-primary
-       {:on-click
-        #(do (let [[rand-first rand-last] (random-name
-                                           @(rf/subscribe [::subs/cur-character-param [:gender]])
-                                           @(rf/subscribe [::subs/cur-character-param [:species]]))]
-               (when (str/blank? @*cur-first)
-                 (set! (-> js/document (.getElementById "cc-nature-name-first") .-value) rand-first))
-               (when (= "" @*cur-last)
-                 (set! (-> js/document (.getElementById "cc-nature-name-last") .-value) rand-last)))
-             (panel/show-modal :name-confirm))} "決定"]]])
+    (let [{fname :first lname :last}   @(rf/subscribe [::subs/cur-character-param [:name]])]
+      [:div.w-100
+       [:div.d-flex.flex-row.align-items-center.justify-content-end.w-100
+        [:div.mr-2 "年齢"]
+        [:input.nes-input.is-dark
+         {:style         {:width "20vw" :height "5vw"}
+          :type          "text"
+          :placeholder   "Your age"
+          :default-value @(rf/subscribe [::subs/cur-character-param [:age]])
+          :on-blur       #(let [v (.. % -target -value)
+                                age (if (js/isNaN v) 20 (js/parseInt v))]
+                            (rf/dispatch-sync [::events/set-character-param [:age] age])
+                            (set! (.. % -target -value) age))}]]
+       [:div.d-flex.flex-row.align-items-center.justify-content-end.w-100
+        [:div.mr-2 "名"]
+        [:input#cc-nature-name-first.nes-input.is-dark
+         {:style         {:width "30vw" :height "5vw"}
+          :type          "text"
+          :placeholder   "First name"
+          :default-value fname
+          :on-blur       #(let [v (.. % -target -value)]
+                            (rf/dispatch-sync [::events/set-character-param [:name :first] v])
+                            (set! (.. % -target -value) v))}]]
+       [:div.d-flex.flex-row.align-items-center.justify-content-end.w-100
+        [:div.mr-2 "姓"]
+        [:input#cc-nature-name-last.nes-input.is-dark
+         {:style         {:width "30vw" :height "5vw"}
+          :type          "text"
+          :placeholder   "Last name"
+          :default-value lname
+          :on-blur       #(let [v (.. % -target -value)]
+                            (rf/dispatch-sync [::events/set-character-param [:name :last] v])
+                            (set! (.. % -target -value) v))}]]
+       [:div.d-flex.flex-row.align-items-center.justify-content-end.w-100
+        [:button.nes-btn.is-primary
+         {:on-click
+          #(do (let [[rand-first rand-last] (random-name
+                                             @(rf/subscribe [::subs/cur-character-param [:gender]])
+                                             @(rf/subscribe [::subs/cur-character-param [:species]]))]
+                 (when (str/blank? fname)
+                   (set! (-> js/document (.getElementById "cc-nature-name-first") .-value) rand-first))
+                 (when (= "" lname)
+                   (set! (-> js/document (.getElementById "cc-nature-name-last") .-value) rand-last)))
+               (panel/show-modal :name-confirm))} "決定"]]]))
 
   (defn name-main []
     (<load-name)
@@ -132,7 +268,7 @@
      [:div.grid-container.w-100.h-100
       ;; Header
       [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature-name :cc-nature-reason :right)} [:h3 "◁"]]
-      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "名前を決めてください"]]
+      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "年齢・名前を決めてください"]]
       ;; Panel
       [:div.nes-container.is-dark.is-rounded.main
        [:div.d-flex.flex-row.align-items-center.w-100.h-100
@@ -147,7 +283,8 @@
                    :on-click #(let [fname (-> js/document (.getElementById "cc-nature-name-first") .-value)
                                     lname (-> js/document (.getElementById "cc-nature-name-last") .-value)]
                                 (rf/dispatch-sync [::events/set-character-param [:name :first] fname])
-                                (rf/dispatch-sync [::events/set-character-param [:name :last] lname]))}
+                                (rf/dispatch-sync [::events/set-character-param [:name :last] lname])
+                                (container/switch-panels :cc-nature-name :cc-nature-confirmation :left))}
                   {:text "いいえ" :on-click #(panel/close-modal :name-confirm)}]]]]
      [panel/modal :name-error ["20vw" "30vw"]
       [:div.nes-container.is-dark.is-rounded {:style {:width "40vw"}}
@@ -185,8 +322,7 @@
         :direction :horizontal]]))
 
   (defn- reason-list []
-    [:div.nes-container.is-dark.is-rounded.experience-list
-     {:style {:width "50vw" :height "40vw"}}
+    [:div.nes-container.is-dark.is-rounded.experience-list {:style {:width "50vw" :height "40vw"}}
      [:div.overflow-auto.w-100.h-100
       [list/choice
        :choices (into []
@@ -522,13 +658,12 @@
                          [::events/set-character-param [:nature :childhood :event]
                           {:title       (childhood :title)
                            :description (childhood :description)}])
-                        (rf/dispatch-sync [::events/set-character-param [:abilities]
+                        (rf/dispatch-sync [::events/set-character-param [:additional-items :abilities]
                                            (if-let [ability (childhood :ability)]
                                              {ability 1}
                                              {})])
                         (when @*language
-                          (rf/dispatch-sync [::events/set-character-param [:languages]
-                                             [@*language]]))
+                          (rf/dispatch-sync [::events/set-character-param [:additional-items :languages] [@*language]]))
                         (container/switch-panels :cc-nature-childhood :cc-nature-happening-childhood :left))}
                   {:text "いいえ" :on-click #(panel/close-modal :childhood-detail)}]
         :direction :horizontal]]))
@@ -624,7 +759,10 @@
        :choices (into []
                       (for [infancy (@*infancy-data
                                      (keyword
-                                      (str @(rf/subscribe [::subs/cur-character-param [:species]])
+                                      (str (let [species @(rf/subscribe [::subs/cur-character-param [:species]])]
+                                             (if (re-find #"ナイトメア" species)
+                                               "ナイトメア"
+                                               species))
                                            "-"
                                            (const/job->category
                                             @(rf/subscribe [::subs/cur-character-param [:job]])))))]
@@ -636,7 +774,10 @@
   (defn- random-infancy []
     (let [infancies (@*infancy-data
                      (keyword
-                      (str @(rf/subscribe [::subs/cur-character-param [:species]])
+                      (str (let [species @(rf/subscribe [::subs/cur-character-param [:species]])]
+                             (if (re-find #"ナイトメア" species)
+                               "ナイトメア"
+                               species))
                            "-"
                            (const/job->category
                             @(rf/subscribe [::subs/cur-character-param [:job]])))))]
@@ -749,17 +890,14 @@
   ;; Main
 
   (defn- born-result [born]
-    (let [title       (cond-> (born :title)
-                        @*nightmare-origin (str ,, "（出自：" @*nightmare-origin "）")
-                        @*lycant-head      (str ,, "（頭部の形状：" @*lycant-head "）"))
-          description (cond-> (born :description)
+    (let [description (cond-> (born :description)
                         @*human-noble       (str ,, "（貴族が冒険に出た理由 ["
                                                     (@*human-noble :title) "]："
                                                     (@*human-noble :description) "）")
                         @*nightmare-freedom (str ,, "（自由になれた理由 ["
                                                     (@*nightmare-freedom :title) "]："
                                                     (@*nightmare-freedom :description) "）"))]
-      {:title title :description description}))
+      {:title (born :title) :description description}))
 
   (defn- born-detail []
     (when-let [born @*cur-born]
@@ -778,8 +916,11 @@
         :choices [{:text "はい"
                    :on-click
                    #(do
-                      (rf/dispatch-sync
-                       [::events/set-character-param [:nature :born] (born-result born)])
+                      (rf/dispatch-sync [::events/set-character-param [:nature :born] (born-result born)])
+                      (rf/dispatch-sync [::events/set-character-param [:species]
+                                         (cond-> @(rf/subscribe [::subs/cur-character-param [:species]])
+                                           @*nightmare-origin (str ,, "（" @*nightmare-origin "）")
+                                           @*lycant-head (str ,, "（" @*lycant-head "）"))])
                       (container/switch-panels :cc-nature-born :cc-nature-infancy :left))}
                   {:text     "いいえ"
                    :on-click #(panel/close-modal :born-detail)}]
@@ -827,21 +968,33 @@
 (do
 
   (defonce *cur-job (reagent/atom nil))
+  (defonce *cur-magical-ability (reagent/atom nil))
 
   (defn- aptitude-test [species job]
-    (let [species-list const/species-list
-          aptitudes    (get-in species-list [species :aptitude])]
-      (some? (some #{job} aptitudes))))
+    (let [aptitudes (:aptitudes (first (filter #(= (% :name) species) const/species-list)))]
+      (some? (some #{(:name job)} aptitudes))))
 
   (defn- job-icon [job]
-    (let [has-aptitude? (aptitude-test (@(rf/subscribe [::subs/cur-character]) :species) (job 0))]
-      [:button.nes-btn {:class (when-not has-aptitude? "is-disabled")
-                        :style {:height "10vw" :width "10vw" :background-color "#bbbbbb" :margin "1vw" :color "#222222"}
+    (let [has-aptitude? (aptitude-test (@(rf/subscribe [::subs/cur-character]) :species) job)]
+      [:button.nes-btn {:class    (when-not has-aptitude? "is-disabled")
+                        :style    {:height "10vw" :width "10vw" :background-color "#bbbbbb" :margin "1vw" :color "#222222"}
                         :on-click (fn []
                                     (when has-aptitude?
-                                      (rf/dispatch-sync [::events/set-character-param [:job] (job 0)])
+                                      (rf/dispatch-sync [::events/set-character-param [:job] (job :name)])
                                       (reset! *cur-job job)))}
-       [:h3 (job 0)]]))
+       [:h3 (job :name)]]))
+
+  (defn- magical-fighter-opts []
+    [:div.nes-container.is-dark.is-rounded
+     [list/choice
+      :header [:h3 "魔法系技能を選択してください"]
+      :choices-size :h4
+      :choices (vec (for [magical-ability ["ソーサラー" "コンジャラー" "プリースト"]]
+                      {:text magical-ability
+                       :on-click #(do (reset! *cur-magical-ability magical-ability)
+                                      (rf/dispatch-sync [::events/set-character-param [:abilities]
+                                                         (merge (@*cur-job :abilities) {magical-ability 2})])
+                                      (container/switch-panels :cc-nature-job :cc-nature-born :left))}))]])
 
   (defn job-main []
     [:div#cc-nature-job.w-100.h-100.p-1
@@ -851,18 +1004,30 @@
       [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "職業を選んでください"]]
       ;; Icons
       (into [:div.d-flex.flex-row.flex-wrap.align-items-center.justify-content-center.w-100.h-100.icons]
-            (for [job const/jobs] ^{:key (job 0)} [job-icon job]))
+            (for [job const/jobs] ^{:key (job :name)} [job-icon job]))
       ;; Description
       [:div.nes-container.is-dark.is-rounded.w-100.h-100.description
-       (when-let [cj @*cur-job]
-         [:div
-          [:h3 (cj 0)]
-          [:h4 (get-in cj [1 :description])]])]
+       (when-let [job @*cur-job]
+         (let [{:keys [technique physique mind]}
+               (const/base-params @(rf/subscribe [::subs/cur-character-param [:species]]) (job :name))]
+           [:div
+            [:h3 (str (job :name) "（技：" technique " 体：" physique " 心：" mind "）")]
+            [:h4 (:description job)]]))]
       ;; Button
-      [:div.nes-btn.is-primary.aux-right {:style {:height "7vw"}
-                                          :on-click #(container/switch-panels :cc-nature-job :cc-nature-born :left)}
+      [:div.nes-btn.is-primary.aux-right
+       {:style {:height "7vw"}
+        :on-click
+        #(do
+           (let [base (const/base-params @(rf/subscribe [::subs/cur-character-param [:species]]) (@*cur-job :name))]
+             (rf/dispatch-sync [::events/set-character-param [:parameters :base] base]))
+           (rf/dispatch-sync [::events/set-character-param [:exp] (@*cur-job :rest-exp)])
+           (if-not (re-find #"魔法.士" (@*cur-job :name))
+             (do (rf/dispatch-sync [::events/set-character-param [:abilities] (@*cur-job :abilities)])
+                 (container/switch-panels :cc-nature-job :cc-nature-born :left))
+             (panel/show-modal :job-magical-fighter-opts)))}
        [:h3 "決定"]]
-      ]]))
+      [panel/modal :job-magical-fighter-opts ["20vw" "20vw"]
+       [magical-fighter-opts]]]]))
 
 ;;; Species ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -883,15 +1048,16 @@
   (defn- species-panel [idx species]
     ^{:key idx}
     [:button.nes-container.is-dark.is-rounded.w-100.h-100
-     {:class (idx->pos-class idx)
-      :on-click (fn []
-                  (rf/dispatch-sync [::events/set-character-param [:species] (species 0)])
-                  (container/switch-panels :cc-nature-species :cc-nature-job :left))}
-     [:div.h-25 [:h4 (species 0)]]
+     {:class    (idx->pos-class idx)
+      :on-click #(do (rf/dispatch-sync [::events/set-character-param [:species] (species :name)])
+                     ;; At this point nightmare's exact species is not determined so nil is set to :languages
+                     (rf/dispatch-sync [::events/set-character-param [:languages] (species :languages)])
+                     (container/switch-panels :cc-nature-species :cc-nature-job :left))}
+     [:div.h-25 [:h4 (species :name)]]
      [:hr]
-     [:div.h-25 [:h4 ((species 1) :feature)]]
+     [:div.h-25 [:h4 (species :feature)]]
      [:hr]
-     [:div.h-25 [:h4 ((species 1) :description)]]])
+     [:div.h-25 [:h4 (species :description)]]])
 
   (defn species-main []
     [:div#cc-nature-species.w-100.h-100.p-1
@@ -899,7 +1065,17 @@
       ;; Header
       [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature-species :home :down)} [:h3 "△"]]
       [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "種族を選んでください"]]
-      [:button.nes-btn.is-primary.aux-right {:on-click #(container/switch-panels :cc-from-nature :home :down)} [:h3 "♂"]]
+      [:button.nes-btn.aux-right {:style    {:color "#ffffff"
+                                             :background-color (case @(rf/subscribe [::subs/cur-character-param [:gender]])
+                                                                 "male"   "#1133ee"
+                                                                 "female" "#ff33dd")}
+                                  :on-click #(let [next (case @(rf/subscribe [::subs/cur-character-param [:gender]])
+                                                          "male"   "female"
+                                                          "female" "male")]
+                                               (rf/dispatch-sync [::events/set-character-param [:gender] next]))}
+       [:h3 (case @(rf/subscribe [::subs/cur-character-param [:gender]])
+              "male"   "♂"
+              "female" "♀")]]
       ;; Arrows
       [:div.d-flex.flex-row.align-items-center.justify-content-center.w-100.h-100.button-left
        [:button.nes-container.is-dark.is-rounded.text-center
@@ -908,5 +1084,5 @@
        [:button.nes-container.is-dark.is-rounded.text-center
         {:on-click (fn [] (swap! *head-idx #(shift-head-idx % cols-count)))} [:h3 "▶"]]]
       ;; Panels
-      (map-indexed #(species-panel %1 %2) (take cols-count (subvec (vec const/species-list) @*head-idx)))
+      (map-indexed #(species-panel %1 %2) (take cols-count (subvec const/species-list @*head-idx)))
       ]]))
