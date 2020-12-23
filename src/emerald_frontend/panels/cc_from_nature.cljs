@@ -148,9 +148,8 @@
            [:h6 (str "敏捷 " (+ agi technique))]]])]]])
 
   (defan- register-character-to-server [character-formatted]
-    (cljs.pprint/pprint character-formatted)
     (panel/show-modal :confirmation-register)
-    (let [res (<! (http/<post-character character-formatted))]
+    (let [res (<! (http/<post-data "/characters/" character-formatted))]
       (println "応答" res)
       (panel/close-modal :confirmation-register)
       (if (= (res :status) 200)
@@ -210,9 +209,9 @@
 
   (defan- <load-image [file]
     (if (<= (.-size file) const/upload-image-size-limit)
-      (let [image {:name   (.-name file)
-                   :size   (.-size file)
-                   :base64 (str/replace (<p! (js/toDataURLPromise file)) #"data.*base64," "")}]
+      (let [image {:size   (.-size file)
+                   :base64 (str/replace (<p! (js/toDataURLPromise file)) #"data.*base64," "")
+                   :extension   ((re-find #"\.([^\.]+)$" (.-name file)) 1)}]
         (rf/dispatch-sync [::events/set-character-param [:image] image])
         true)
       (do (panel/show-modal :name-error)

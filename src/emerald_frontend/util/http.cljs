@@ -9,6 +9,7 @@
 
 (defan <get-data [url-from-root]
   (println "<get-data")
+  (println (str const/server-url url-from-root))
   (let [url (str const/server-url url-from-root)
         data (<! (http/get url {:with-credentials? false
                                 :keywordize-keys false}))]
@@ -17,9 +18,16 @@
     ;;      (transform-keys #(->kebab-case-keyword % :separator \_) ,,))
     ))
 
-(defan <post-character [character-formatted]
-  (let [url (str const/server-url "/characters/")
-        res (<! (http/post url {:json-params character-formatted
+(defan <post-data [url-from-root data]
+  (let [url (str const/server-url url-from-root)
+        res (<! (http/post url {:json-params data
                                 :with-credentials? false
                                 :keywordize-keys false}))]
+    res))
+
+(defan <delete [url-from-root & data]
+  (let [url (str const/server-url url-from-root)
+        res (<! (http/delete url {:json-params data
+                                  :with-credentials? false
+                                  :keywordize-keys false}))]
     res))
