@@ -17,6 +17,7 @@
      (into
       [:div]
       (for [i (range (count choices))]
+        ^{:key (random-uuid)}
         (let [body [:label
                     [:input.nes-radio.is-dark
                      {:type            "radio"
