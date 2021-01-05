@@ -24,15 +24,15 @@
     [:div.nes-container.is-dark.is-rounded {:style {:width "10vw" :height "10vw" :padding "1vw"}}
      ;; Picture area
      (if-let [image (summary :image)]
-       [:img.profile-image.w-100.h-100 {:src (str const/server-url "/characters/id/" (summary :idx) "/image")}]
+       [:img.profile-image.w-100.h-100 {:src (str const/server-url "/characters/" (summary :idx) "/image")}]
        [:h6 "Default image"])]
-    (let [{:keys [age job species]
+    (let [{:keys [age species]
            {fname :first mname :middle lname :last} :name}
           summary]
       [:div
        [:h4 (str fname (when-not (empty? mname) (str "・" mname)) (when-not (empty? lname) (str "・" lname))
                  "（" age "）")]
-       [:h5 (str "[" species "の" job "]")]])]])
+       [:h5 (str "[" (species :name) "]")]])]])
 
 (defn- summary-list
   "type :start/:show/:delete"
@@ -68,7 +68,7 @@
       :choices [{:text "はい" :on-click #(case @*delete-confirmation-depth
                                            2 (go
                                                (reset! *delete-confirmation-depth 3)
-                                               (<! (http/<delete (str "/characters/id/" @*cur-character-idx)))
+                                               (<! (http/<delete (str "/characters/" @*cur-character-idx)))
                                                (<! (<load-characters-summary))
                                                (reset! *delete-confirmation-depth 4))
                                            (swap! *delete-confirmation-depth inc))}

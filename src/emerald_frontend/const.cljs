@@ -13,32 +13,32 @@
   [{:name        "人間"
     :feature     "運命変転：運命をコロコロする"
     :description "一般的な種族で数が多くて云々"
-    :languages   [{:title "交易共通語" :oral true :literal true}
-                  {:title "地方語" :oral true :literal true}]
+    :languages   [{:name "交易共通語" :oral true :literal true}
+                  {:name "地方語" :oral true :literal true}]
     :aptitudes   ["戦士" "剣士" "拳闘士" "密偵" "魔術師" "操霊術師" "神官" "魔法戦士" "魔法剣士"]}
    {:name        "エルフ"
     :feature     "親水性：水によく溶ける"
     :description "人混みで鋭利な耳が突き刺さる死亡事故が絶えない"
-    :languages   [{:title "交易共通語" :oral true :literal true}
-                  {:title "エルフ語" :oral true :literal true}]
+    :languages   [{:name "交易共通語" :oral true :literal true}
+                  {:name "エルフ語" :oral true :literal true}]
     :aptitudes   ["剣士" "拳闘士" "密偵" "魔術師" "操霊術師" "神官" "魔法剣士"]}
    {:name        "ドワーフ"
     :feature     "耐火：安心のタイガー社製"
     :description "ロリとヒゲしかいない特異な種族。それ以外の容姿に生まれると殺されてしまうのだ"
-    :languages   [{:title "交易共通語" :oral true :literal true}
-                  {:title "ドワーフ語" :oral true :literal true}]
+    :languages   [{:name "交易共通語" :oral true :literal true}
+                  {:name "ドワーフ語" :oral true :literal true}]
     :aptitudes   ["戦士" "拳闘士" "神官" "魔法戦士"]}
    {:name        "タビット"
     :feature     "跳躍：跳躍ロールに100%成功する"
     :description "月で餅を突いて一生を終えるため地球上には存在しない"
-    :languages   [{:title "交易共通語" :oral true :literal true}
-                  {:title "神紀文明語" :oral false :literal true}]
+    :languages   [{:name "交易共通語" :oral true :literal true}
+                  {:name "神紀文明語" :oral false :literal true}]
     :aptitudes   ["魔術師" "操霊術師"]}
    {:name        "リカント"
     :feature     "変身：柴犬になれる"
     :description "月夜の晩によく遠吠えをする。ご近所トラブルに発展することもしばしば"
-    :languages   [{:title "交易共通語" :oral true :literal true}
-                  {:title "リカント語" :oral true :literal true}]
+    :languages   [{:name "交易共通語" :oral true :literal true}
+                  {:name "リカント語" :oral true :literal true}]
     :aptitudes   ["戦士" "剣士" "拳闘士" "密偵"]}
    {:name        "ナイトメア"
     :feature     "穢れ：中二心をくすぐれる"
@@ -49,40 +49,40 @@
 (def jobs
   [{:name        "戦士"
     :description "いわゆるタンク。PTに1人は入れとかないと壊滅するんジャー"
-    :abilities   {"ファイター" 2}
+    :abilities   [{:name "ファイター" :level 2}]
     :rest-exp    1000}
    {:name        "剣士"
     :description "紙装甲である代わりにガンガンクリティカル出すんジャー"
-    :abilities   {"フェンサー" 2}
+    :abilities   [{:name "フェンサー" :level 2}]
     :rest-exp    1500}
    {:name        "魔法戦士"
     :description "剣と魔法のよくばりセット"
-    :abilities   {"ファイター" 1}
+    :abilities   [{:name "ファイター" :level 1}]
     :rest-exp    0}
    {:name        "魔法剣士"
     :description "「まほうけん」が使える。わけではない。魔法と剣が使える"
-    :abilities   {"フェンサー" 1}
+    :abilities   [{:name "フェンサー" :level 1}]
     :rest-exp    500}
    {:name        "拳闘士"
     :description "男と生まれたからには、誰でも一生の内一度は夢見る「地上最強の男」。グラップラーとは、「地上最強の男」を目指す格闘士のことである（例のBGM）"
-    :abilities   {"グラップラー" 2}
+    :abilities   [{:name "グラップラー" :level 2}]
     :rest-exp    1000}
    {:name        "密偵"
     :description "スパイ業を営む。国家の陰謀の成否は彼に掛かっている"
-    :abilities   {"スカウト"   2
-                  "フェンサー" 1}
+    :abilities   [{:name "スカウト" :level 2}
+                  {:name "フェンサー" :level 1}]
     :rest-exp    1000}
    {:name        "魔術師"
     :description "黒魔道士のこと"
-    :abilities   {"ソーサラー" 2}
+    :abilities   [{:name "ソーサラー" :level 2}]
     :rest-exp    1000}
    {:name        "操霊術師"
     :description "公式イラストのおねえさんがエロい"
-    :abilities   {"コンジャラー" 2}
+    :abilities   [{:name "コンジャラー" :level 2}]
     :rest-exp    1000}
    {:name        "神官"
     :description "白魔道士のこと"
-    :abilities   {"プリースト" 2}
+    :abilities   [{:name "プリースト" :level 2}]
     :rest-exp    1000}])
 
 (def job->category
@@ -159,10 +159,10 @@
 (defn base-params [species job]
   (get-in job-species-base-map [(name job) (name species)]))
 
-(defn language->str [{:keys [title oral literal]}]
+(defn language->str [{:keys [name oral literal]}]
   (let [or?   (or oral literal)
         both? (and oral literal)]
-    (str title
+    (str name
          (when or?
            (str "（" (when oral "会話") (when both? "、") (when literal "読文") "）")))))
 
