@@ -1,6 +1,6 @@
 (ns emerald-frontend.panels.cc-from-nature
   (:require [async-interop.interop :refer-macros [<p!]]
-            [cljs.core.async :refer [<! go]]
+            [cljs.core.async :refer [<! >! go chan]]
             [cljs.reader :as reader]
             [clojure.string :as str]
             [emerald-frontend.components.container :as container]
@@ -15,7 +15,8 @@
             [cljs-http.client :as client]
             [re-frame.core :as rf]
             [reagent.core :as reagent]
-            [clojure.walk :as walk]))
+            [clojure.walk :as walk]
+            [emerald-frontend.util.css :refer [vw]]))
 
 ;;; Confirmation ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -101,7 +102,7 @@
     [:div.skills.w-100.h-100
      [:div.nes-container.is-dark.is-rounded.w-100.h-100.d-flex.flex-row
       [:div {:style {:width        "33%"
-                     :border-right (str "0.4vw solid " (colors/base 10))}}
+                     :border-right (str (vw 0.4) " solid " (colors/base 10))}}
        [:h5 "技能"]
        [:hr]
        (into [:div]
@@ -110,7 +111,7 @@
                 [:h6 (ability :name)]
                 [:h6 (str "Lv " (ability :level))]]))]
       [:div {:style {:width        "33%"
-                     :border-right (str "0.4vw solid " (colors/base 10))}}
+                     :border-right (str (vw 0.4) " solid " (colors/base 10))}}
        [:h5 "戦闘特技"]
        [:hr]
        (into [:div]
@@ -126,8 +127,8 @@
   (defn- confirmation-params [character]
     [:div.params.w-100.h-100
      [:div.nes-container.is-dark.is-rounded.w-100.h-100.d-flex.flex-row
-      [:div.nes-container.is-dark.is-rounded {:style {:width    "15vw"     :height  "15vw"
-                                                      :position "relative" :padding "1vw"}}
+      [:div.nes-container.is-dark.is-rounded {:style {:width    (vw 15)     :height  (vw 15)
+                                                      :position "relative" :padding (vw 1)}}
        ;; Picture area
        (if-let [image (get-in character [:options :image])]
          [:img.profile-image.w-100.h-100 {:src (str "data:" (image :type) ";base64," (image :base64))}]
@@ -196,10 +197,10 @@
           [confirmation-params character]
           [confirmation-skills character]
           [confirmation-biography character]]]]
-       [panel/modal :confirmation-register ["20vw" "35vw"] {:backdropper-rigid? true}
+       [panel/modal :confirmation-register [(vw 20) (vw 35)] {:backdropper-rigid? true}
         [:div.nes-container.is-dark.is-rounded
          [:h3 "キャラクターを登録しています…"]]]
-       [panel/modal :confirmation-complete ["20vw" "35vw"] {:backdropper-rigid? true}
+       [panel/modal :confirmation-complete [(vw 20) (vw 35)] {:backdropper-rigid? true}
         [:div.nes-container.is-dark.is-rounded
          [:h3 "作成が完了しました！"]
          [:div.d-flex.flex-row.align-items-center.justify-content-center.w-100
@@ -207,7 +208,7 @@
                                                       (rf/dispatch-sync [::events/initialize-db])
                                                       (container/switch-panels :cc-nature-confirmation :home :down))}
            "OK"]]]]
-       [panel/modal :confirmation-failure ["20vw" "35vw"]
+       [panel/modal :confirmation-failure [(vw 20) (vw 35)]
         [:div.nes-container.is-dark.is-rounded
          [:h3 "作成に失敗しました。"]
          [:h6 @*errors]
@@ -226,11 +227,22 @@
       (reset! *name-data (res :body))
       true))
 
+  (defan- <get-image-size [file]
+    (let [ch  (chan)
+          img (js/Image.)]
+      (set! (.-onload img)
+            (fn []
+              (.revokeObjectURL js/URL (.-src img))
+              (go (>! ch {:width (.-width img) :height (.-height img)}))))
+      (set! (.-src img) (.createObjectURL js/URL file))
+      (<! ch)))
+
   (defan- <load-image [file]
     (if (<= (.-size file) const/upload-image-size-limit)
-      (let [image {:size   (.-size file)
-                   :base64 (str/replace (<p! (js/toDataURLPromise file)) #"data.*base64," "")
-                   :extension   ((re-find #"\.([^\.]+)$" (.-name file)) 1)}]
+      (let [image (merge {:size      (.-size file)
+                          :base64    (str/replace (<p! (js/toDataURLPromise file)) #"data.*base64," "")
+                          :extension ((re-find #"\.([^\.]+)$" (.-name file)) 1)}
+                         (<! (<get-image-size file)))]
         (rf/dispatch-sync [::events/set-character-param [:options :image] image])
         true)
       (do (panel/show-modal :name-error)
@@ -247,12 +259,12 @@
                                         (let [file (first (.. e -target -files))]
                                           (<load-image file)))}]
      ;; Image
-     [:div.nes-container.is-dark.is-rounded {:style {:width    "20vw"     :height  "20vw"
-                                                     :position "relative" :padding "1vw"}}
+     [:div.nes-container.is-dark.is-rounded {:style {:width    (vw 20)     :height  (vw 20)
+                                                     :position "relative" :padding (vw 1)}}
       ;; Default style of input elements is ugly so using a label instead
       [:label {:for "file-selector"}
-       [:div.nes-btn.is-secondary {:style {:width    "5vw"      :height "5vw"    :padding "0px"
-                                           :position "absolute" :left   "-1.5vw" :top     "-1.5vw"}}
+       [:div.nes-btn.is-secondary {:style {:width    (vw 5)      :height (vw 5)    :padding "0px"
+                                           :position "absolute" :left   (vw -1.5) :top     (vw -1.5)}}
         [:i.fas.fa-cloud-upload-alt.fa-sm]]]
       ;; Picture area
       (if-let [image @(rf/subscribe [::subs/cur-character-param [:options :image]])]
@@ -270,23 +282,23 @@
       [(first-name species-key) (last-name species-key)]))
 
   (defn- name-input []
-    (let [{fname :first lname :last}   @(rf/subscribe [::subs/cur-character-param [:personality :name]])]
+    (let [{fname :first lname :last} @(rf/subscribe [::subs/cur-character-param [:personality :name]])]
       [:div.w-100
        [:div.d-flex.flex-row.align-items-center.justify-content-end.w-100
         [:div.mr-2 "年齢"]
         [:input.nes-input.is-dark
-         {:style         {:width "20vw" :height "5vw"}
+         {:style         {:width (vw 20) :height (vw 5)}
           :type          "text"
           :placeholder   "Your age"
           :default-value @(rf/subscribe [::subs/cur-character-param [:personality :age]])
-          :on-blur       #(let [v (.. % -target -value)
+          :on-blur       #(let [v   (.. % -target -value)
                                 age (if (js/isNaN v) 20 (js/parseInt v))]
                             (rf/dispatch-sync [::events/set-character-param [:personality :age] age])
                             (set! (.. % -target -value) age))}]]
        [:div.d-flex.flex-row.align-items-center.justify-content-end.w-100
         [:div.mr-2 "名"]
         [:input#cc-nature-name-first.nes-input.is-dark
-         {:style         {:width "30vw" :height "5vw"}
+         {:style         {:width (vw 30) :height (vw 5)}
           :type          "text"
           :placeholder   "First name"
           :default-value fname
@@ -296,7 +308,7 @@
        [:div.d-flex.flex-row.align-items-center.justify-content-end.w-100
         [:div.mr-2 "姓"]
         [:input#cc-nature-name-last.nes-input.is-dark
-         {:style         {:width "30vw" :height "5vw"}
+         {:style         {:width (vw 30) :height (vw 5)}
           :type          "text"
           :placeholder   "Last name"
           :default-value lname
@@ -327,8 +339,8 @@
        [:div.d-flex.flex-row.align-items-center.w-100.h-100
         [profile-image]
         [name-input]]]]
-     [panel/modal :name-confirm ["40vw" "60vw"]
-      [:div.nes-container.is-dark.is-rounded {:style {:width "30vw" :height "10vw"}}
+     [panel/modal :name-confirm [(vw 40) (vw 60)]
+      [:div.nes-container.is-dark.is-rounded {:style {:width (vw 30) :height (vw 10)}}
        [list/choice
         :header [:h3 "これでいいですか？"]
         :direction :horizontal
@@ -339,8 +351,8 @@
                                 (rf/dispatch-sync [::events/set-character-param [:personality :name :last] lname])
                                 (container/switch-panels :cc-nature-name :cc-nature-confirmation :left))}
                   {:text "いいえ" :on-click #(panel/close-modal :name-confirm)}]]]]
-     [panel/modal :name-error ["20vw" "30vw"]
-      [:div.nes-container.is-dark.is-rounded {:style {:width "40vw"}}
+     [panel/modal :name-error [(vw 20) (vw 30)]
+      [:div.nes-container.is-dark.is-rounded {:style {:width (vw 40)}}
        [:h3 "アップロード可能なプロフィール画像の最大サイズは200KBです。"]
        [:button.nes-btn.is-primary {:on-click #(panel/close-modal :name-error)}
         "OK"]]]]))
@@ -360,7 +372,7 @@
 
   (defn- reason-detail []
     (when-let [reason @*cur-reason]
-      [:div.nes-container.is-dark.is-rounded {:style {:width "90vw"}}
+      [:div.nes-container.is-dark.is-rounded {:style {:width (vw 90)}}
        [:h3 reason]
        [:hr]
        [list/choice
@@ -375,7 +387,7 @@
         :direction :horizontal]]))
 
   (defn- reason-list []
-    [:div.nes-container.is-dark.is-rounded.experience-list {:style {:width "50vw" :height "40vw"}}
+    [:div.nes-container.is-dark.is-rounded.experience-list {:style {:width (vw 50) :height (vw 40)}}
      [:div.overflow-auto.w-100.h-100
       [list/choice
        :choices (into []
@@ -403,8 +415,8 @@
                                                 (reset! *cur-reason (random-reason))
                                                 (panel/show-modal :reason-detail))}
                   {:text "自分で選ぶ" :on-click #(panel/show-modal :reason-experience-list)}]]]]
-     [panel/modal :reason-experience-list ["15vw" "35vw"] [reason-list]]
-     [panel/modal :reason-detail ["10vw" "5vw"] [reason-detail]]]))
+     [panel/modal :reason-experience-list [(vw 15) (vw 35)] [reason-list]]
+     [panel/modal :reason-detail [(vw 10) (vw 5)] [reason-detail]]]))
 
 ;;; Happenings ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -440,7 +452,7 @@
           [list/choice
            :header [:h3 (str (name key) "：")]
            :direction :horizontal
-           :choices (into [] (if (= key :複数) ; TODO why can't eval fuckfuckfuck
+           :choices (into [] (if (= key :複数) ; TODO why can't eval sexp in the string fuckfuckfuck
                                (for [ms multiple-sweethearts]
                                  {:text     ms
                                   :on-click #(reset! *sub-item ms)})
@@ -467,7 +479,7 @@
     (when-let [happening @*target]
       (let [move-from (keyword (str "cc-nature-happening-" (name period)))
             move-to   (if (= period :infancy) :cc-nature-childhood :cc-nature-adolescence)]
-        [:div.nes-container.is-dark.is-rounded {:style {:width "70vw"}}
+        [:div.nes-container.is-dark.is-rounded {:style {:width (vw 70)}}
          [:h3 (happening :abstract)]
          [:h4 (happening :detail)]
          (reset! *sub-item nil)
@@ -484,7 +496,7 @@
           :direction :horizontal]])))
 
   (defn- fortune-list [*target]
-    [:div.nes-container.is-dark.is-rounded.experience-list {:style {:width "90vw" :height "30vw"}}
+    [:div.nes-container.is-dark.is-rounded.experience-list {:style {:width (vw 90) :height (vw 30)}}
      [:div.overflow-auto.w-100.h-100
       [list/choice
        :choices (into []
@@ -495,7 +507,7 @@
                                                                (panel/show-modal :happening-detail))}))]]])
 
   (defn- tragedy-list [*target]
-    [:div.nes-container.is-dark.is-rounded.experience-list {:style {:width "90vw" :height "30vw"}}
+    [:div.nes-container.is-dark.is-rounded.experience-list {:style {:width (vw 90) :height (vw 30)}}
      [:div.overflow-auto.w-100.h-100
       [list/choice
        :choices (into []
@@ -506,7 +518,7 @@
                                                                (panel/show-modal :happening-detail))}))]]])
 
   (defn- love-list [*target]
-    [:div.nes-container.is-dark.is-rounded.experience-list {:style {:width "90vw" :height "30vw"}}
+    [:div.nes-container.is-dark.is-rounded.experience-list {:style {:width (vw 90) :height (vw 30)}}
      [:div.overflow-auto.w-100.h-100
       [list/choice
        :choices (into []
@@ -517,7 +529,7 @@
                                                             (panel/show-modal :happening-detail))}))]]])
 
   (defn- secret-list [*target]
-    [:div.nes-container.is-dark.is-rounded.experience-list {:style {:width "90vw" :height "30vw"}}
+    [:div.nes-container.is-dark.is-rounded.experience-list {:style {:width (vw 90) :height (vw 30)}}
      [:div.overflow-auto.w-100.h-100
       [list/choice
        :choices (into []
@@ -569,12 +581,12 @@
                                                 (reset! *cur-happening (random-happening period))
                                                 (panel/show-modal :happening-detail))}
                   {:text "自分で選ぶ" :on-click #(panel/show-modal :happening-set)}]]]]
-     [panel/modal :happening-set          ["18vw" "30vw"] [happening-set period]]
-     [panel/modal :happening-fortune-list ["15vw" "5vw"]  [fortune-list *cur-happening]]
-     [panel/modal :happening-tragedy-list ["15vw" "5vw"]  [tragedy-list *cur-happening]]
-     [panel/modal :happening-love-list    ["15vw" "5vw"]  [love-list *cur-happening]]
-     [panel/modal :happening-secret-list  ["15vw" "5vw"]  [secret-list *cur-happening]]
-     [panel/modal :happening-detail       ["20vw" "15vw"] [happening-detail *cur-happening period]]]))
+     [panel/modal :happening-set          [(vw 18) (vw 30)] [happening-set period]]
+     [panel/modal :happening-fortune-list [(vw 15) (vw 5)]  [fortune-list *cur-happening]]
+     [panel/modal :happening-tragedy-list [(vw 15) (vw 5)]  [tragedy-list *cur-happening]]
+     [panel/modal :happening-love-list    [(vw 15) (vw 5)]  [love-list *cur-happening]]
+     [panel/modal :happening-secret-list  [(vw 15) (vw 5)]  [secret-list *cur-happening]]
+     [panel/modal :happening-detail       [(vw 20) (vw 15)] [happening-detail *cur-happening period]]]))
 
 ;;; Adolescence ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -609,7 +621,7 @@
 
   (defn- adolescence-detail []
     (when-let [adolescence @*cur-adolescence]
-      [:div.nes-container.is-dark.is-rounded {:style {:width "90vw"}}
+      [:div.nes-container.is-dark.is-rounded {:style {:width (vw 90)}}
        [:h3 (adolescence :abstract)]
        [:h4 (str "習得戦闘特技：" (or (adolescence :skill) "-"))]
        [adolescence-sub adolescence]
@@ -636,7 +648,7 @@
 
   (defn- adolescence-list []
     [:div.nes-container.is-dark.is-rounded.experience-list
-     {:style {:width "50vw" :height "40vw"}}
+     {:style {:width (vw 50) :height (vw 40)}}
      [:div.overflow-auto.w-100.h-100
       [list/choice
        :choices (into []
@@ -671,8 +683,8 @@
                                                 (reset! *cur-adolescence (random-adolescence))
                                                 (panel/show-modal :adolescence-detail))}
                   {:text "自分で選ぶ" :on-click #(panel/show-modal :adolescence-experience-list)}]]]]
-     [panel/modal :adolescence-experience-list ["15vw" "35vw"] [adolescence-list]]
-     [panel/modal :adolescence-detail ["10vw" "5vw"] [adolescence-detail]]
+     [panel/modal :adolescence-experience-list [(vw 15) (vw 35)] [adolescence-list]]
+     [panel/modal :adolescence-detail [(vw 10) (vw 5)] [adolescence-detail]]
      ]))
 
 ;;; Childhood ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -703,7 +715,7 @@
 
   (defn- childhood-detail []
     (when-let [childhood @*cur-childhood]
-      [:div.nes-container.is-dark.is-rounded {:style {:width "90vw"}}
+      [:div.nes-container.is-dark.is-rounded {:style {:width (vw 90)}}
        [:h3 (childhood :abstract)]
        [:h4 (str "習得技能：" (or (childhood :ability) "-"))]
        [:h4 (childhood :detail)]
@@ -730,7 +742,7 @@
 
   (defn- childhood-list []
     [:div.nes-container.is-dark.is-rounded.experience-list
-     {:style {:width "50vw" :height "40vw"}}
+     {:style {:width (vw 50) :height (vw 40)}}
      [:div.overflow-auto.w-100.h-100
       [list/choice
        :choices (into []
@@ -764,8 +776,8 @@
                                                 (reset! *cur-childhood (random-childhood))
                                                 (panel/show-modal :childhood-detail))}
                   {:text "自分で選ぶ" :on-click #(panel/show-modal :childhood-experience-list)}]]]]
-     [panel/modal :childhood-experience-list ["15vw" "35vw"] [childhood-list]]
-     [panel/modal :childhood-detail ["10vw" "5vw"] [childhood-detail]]
+     [panel/modal :childhood-experience-list [(vw 15) (vw 35)] [childhood-list]]
+     [panel/modal :childhood-detail [(vw 10) (vw 5)] [childhood-detail]]
      ]))
 
 ;;; Infancy ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -795,7 +807,7 @@
 
   (defn- infancy-detail []
     (when-let [infancy @*cur-infancy]
-      [:div.nes-container.is-dark.is-rounded {:style {:width "70vw"}}
+      [:div.nes-container.is-dark.is-rounded {:style {:width (vw 70)}}
        [:h3 (str (infancy :abstract) "（" (infancy :type) "）")]
        [:h4 (infancy :detail)]
        [:hr]
@@ -812,7 +824,7 @@
 
   (defn- infancy-list []
     [:div.nes-container.is-dark.is-rounded.experience-list
-     {:style {:width "50vw" :height "40vw"}}
+     {:style {:width (vw 50) :height (vw 40)}}
      [:div.overflow-auto.w-100.h-100
       [list/choice
        :choices
@@ -859,9 +871,9 @@
                                                 (reset! *cur-infancy (random-infancy))
                                                 (panel/show-modal :infancy-detail))}
                   {:text "自分で選ぶ" :on-click #(panel/show-modal :infancy-experience-list)}]]]
-      [panel/modal :infancy-experience-list ["15vw" "35vw"]
+      [panel/modal :infancy-experience-list [(vw 15) (vw 35)]
        [infancy-list]]]
-     [panel/modal :infancy-detail ["10vw" "15vw"]
+     [panel/modal :infancy-detail [(vw 10) (vw 15)]
       [infancy-detail]]
      ]))
 
@@ -963,7 +975,7 @@
 
   (defn- born-detail []
     (when-let [born @*cur-born]
-      [:div.nes-container.is-dark.is-rounded {:style {:width "90vw"}}
+      [:div.nes-container.is-dark.is-rounded {:style {:width (vw 90)}}
        [:h3 (born :abstract)]
        [:h4 (born :detail)]
        (reset! *nightmare-origin nil)
@@ -989,7 +1001,7 @@
   (defn- born-list []
     (let [cur-species @(rf/subscribe [::subs/cur-character-param [:personality :species :name]])]
       [:div.nes-container.is-dark.is-rounded.experience-list
-       {:style {:width "50vw" :height "40vw"}}
+       {:style {:width (vw 50) :height (vw 40)}}
        [:div.overflow-auto.w-100.h-100
         [list/choice
          :choices (into []
@@ -1017,9 +1029,9 @@
                                                 (reset! *cur-born (random-born))
                                                 (panel/show-modal :born-detail))}
                   {:text "自分で選ぶ" :on-click #(panel/show-modal :born-experience-list)}]]]]
-     [panel/modal :born-experience-list ["15vw" "35vw"]
+     [panel/modal :born-experience-list [(vw 15) (vw 35)]
       [born-list]]
-     [panel/modal :born-detail ["10vw" "5vw"]
+     [panel/modal :born-detail [(vw 10) (vw 5)]
       [born-detail]]
      ]))
 
@@ -1039,7 +1051,7 @@
                          @(rf/subscribe [::subs/cur-character-param [:personality :species :name]])
                          job)]
       [:button.nes-btn {:class    (when-not has-aptitude? "is-disabled")
-                        :style    {:height "10vw" :width "10vw" :background-color "#bbbbbb" :margin "1vw" :color "#222222"}
+                        :style    {:height (vw 10) :width (vw 10) :background-color "#bbbbbb" :margin (vw 1) :color "#222222"}
                         :on-click (fn []
                                     (when has-aptitude?
                                       (rf/dispatch-sync [::events/set-character-param [:personality :job] (job :name)])
@@ -1080,7 +1092,7 @@
             [:h4 (:description job)]]))]
       ;; Button
       [:div.nes-btn.is-primary.aux-right
-       {:style {:height "7vw"}
+       {:style {:height (vw 7)}
         :on-click
         #(do
            (let [base (const/base-params
@@ -1093,7 +1105,7 @@
                  (container/switch-panels :cc-nature-job :cc-nature-born :left))
              (panel/show-modal :job-magical-fighter-opts)))}
        [:h3 "決定"]]
-      [panel/modal :job-magical-fighter-opts ["20vw" "20vw"]
+      [panel/modal :job-magical-fighter-opts [(vw 20) (vw 20)]
        [magical-fighter-opts]]]]))
 
 ;;; Species ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -7,8 +7,9 @@
 
 (defn- panels []
   [container/transient-container
-   :home
+   :status
    {:home                          [home/main]
+    :status                        [home/character-show-status]
     :cc-nature-species             [nature/species-main]
     :cc-nature-job                 [nature/job-main]
     :cc-nature-born                [nature/born-main]

@@ -395,7 +395,7 @@ input[type="checkbox"] {
 .nes-balloon, .nes-balloon.is-dark, .nes-btn, .nes-container.is-rounded, .nes-container.is-rounded.is-dark, .nes-dialog.is-rounded, .nes-dialog.is-rounded.is-dark, .nes-progress, .nes-progress.is-rounded, .nes-table.is-bordered, .nes-table.is-dark.is-bordered, .nes-input,
 .nes-textarea, .nes-select select {
   border-style: solid;
-  border-width: 4px;
+  border-width: calc(0.3 * min(1vw, 1vh * 16 / 9));
 }
 
 /* https://medium.com/@matuzo/writing-css-with-accessibility-in-mind-8514a0007939 */
@@ -863,8 +863,8 @@ input[type="checkbox"] {
   width: 26px;
   height: 10px;
   background-color: #fff;
-  border-right: 4px solid #212529;
-  border-left: 4px solid #212529;
+  border-right: calc(0.3 * min(1vw, 1vh * 16 / 9)) solid #212529;
+  border-left: calc(0.3 * min(1vw, 1vh * 16 / 9)) solid #212529;
 }
 
 .nes-balloon.from-left::after {
@@ -886,8 +886,8 @@ input[type="checkbox"] {
   width: 26px;
   height: 10px;
   background-color: #fff;
-  border-right: 4px solid #212529;
-  border-left: 4px solid #212529;
+  border-right: calc(0.3 * min(1vw, 1vh * 16 / 9)) solid #212529;
+  border-left: calc(0.3 * min(1vw, 1vh * 16 / 9)) solid #212529;
 }
 
 .nes-balloon.from-right::after {
@@ -1115,7 +1115,7 @@ input[type="checkbox"] {
   padding: 1.5rem 2rem;
   border-color: black;
   border-style: solid;
-  border-width: 4px;
+  border-width: calc(0.3 * min(1vw, 1vh * 16 / 9));
 }
 
 .nes-container > :last-child {
@@ -1242,7 +1242,7 @@ input[type="checkbox"] {
 
 .nes-dialog {
   padding: 1.5rem 2rem;
-  border-width: 4px;
+  border-width: calc(0.3 * min(1vw, 1vh * 16 / 9));
 }
 
 .nes-dialog > .backdrop, .nes-dialog::-webkit-backdrop {
@@ -1518,7 +1518,9 @@ input[type="checkbox"] {
 }
 
 .nes-table {
-  table-layout: fixed;
+  table-layout: auto;
+  border-collapse: separate;
+  border-spacing: calc(1.0 * min(1vw, 1vh * 16 / 9)) 0;
   background-color: #fff;
   /***************************************************************************  \
     This eliminates the gap between the last row in a table and the border, as
@@ -1531,14 +1533,28 @@ input[type="checkbox"] {
   margin-left: -0.25em;
 }
 
-.nes-table th,
-.nes-table td {
+.nes-table th
+{
   position: relative;
-  padding: 0.5rem;
+  padding: 0;
+  text-align: center;
   word-wrap: break-word;
   border-color: #212529;
   border-style: solid;
-  border-width: 0 0.25em 0.25em 0;
+  border-width: 0 0 calc(0.3 * min(1vw, 1vh * 16 / 9)) 0;
+}
+.nes-table td {
+  position: relative;
+  padding: 0;
+  word-wrap: break-word;
+  border-style: none;
+  border-color: #212529;
+  border-width: 0 calc(0.3 * min(1vw, 1vh * 16 / 9)) calc(0.3 * min(1vw, 1vh * 16 / 9)) 0;
+}
+th.center,
+td.center
+{
+  text-align: center;
 }
 
 .nes-table th:last-child,
@@ -1546,16 +1562,16 @@ input[type="checkbox"] {
   border-right-width: 0;
 }
 
-.nes-table th::after, .nes-table th::before,
-.nes-table td::after,
-.nes-table td::before {
-  position: absolute;
-  display: block;
-  width: 0.25em;
-  height: 0.25em;
-  content: "";
-  background-color: #212529;
-}
+/* .nes-table th::after, .nes-table th::before, */
+/* .nes-table td::after, */
+/* .nes-table td::before { */
+/*   position: absolute; */
+/*   display: block; */
+/*   width: 0.25em; */
+/*   height: 0.25em; */
+/*   content: ""; */
+/*   background-color: #212529; */
+/* } */
 
 .nes-table th::after,
 .nes-table td::after {
@@ -1580,7 +1596,6 @@ input[type="checkbox"] {
 }
 
 .nes-table.is-bordered {
-  margin: 4px;
   border-spacing: 0;
   border-collapse: separate;
   border-image-slice: 2;
@@ -1607,14 +1622,14 @@ input[type="checkbox"] {
   background-color: #212529;
 }
 
-.nes-table.is-dark::before {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  content: "";
-}
+/* .nes-table.is-dark::before { */
+/*   position: absolute; */
+/*   top: 0; */
+/*   right: 0; */
+/*   bottom: 0; */
+/*   left: 0; */
+/*   content: ""; */
+/* } */
 
 .nes-table.is-dark.is-bordered {
   border-image-slice: 2;

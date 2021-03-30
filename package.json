@@ -8,7 +8,7 @@
     "dependencies": {
         "bootstrap": "^4.3.1",
         "chart.js": "^2.9.3",
-        "create-react-class": "15.6.2",
+        "create-react-class": "^15.7.0",
         "encoding-japanese": "^1.0.30",
         "highlight.js": "^9.15.10",
         "jquery": "^3.4.1",

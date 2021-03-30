@@ -1,4 +1,4 @@
 (ns emerald-frontend.util.js)
 
-(defn get-el [id]
+(defn by-id [id]
   (-> js/document (.getElementById id)))

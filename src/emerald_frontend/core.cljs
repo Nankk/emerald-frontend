@@ -6,7 +6,7 @@
    [emerald-frontend.views :as views]
    [emerald-frontend.config :as config]
    [emerald-frontend.style.core :as style.core]
-   [emerald-frontend.util.js :as util.js]))
+   [emerald-frontend.util.js :refer [by-id]]))
 
 (defn- compile-garden []
   (println "Compiling garden...")
@@ -26,13 +26,14 @@
 
 (defn- resize-screen []
   (let [ratio [16 9]
-        w     (-> (util.js/get-el "app") .-clientWidth)
-        ;; h     (-> (util.js/get-el "app") .-clientHeight)
-        ;; rw    (/ (* h (ratio 0)) (ratio 1))
-        rh    (/ (* w (ratio 1)) (ratio 0))]
-    (rf/dispatch-sync [::events/set-panel-width w #_(min w rw)])
-    ;; LATER: Don't know how to change font size relatively both to vw and to vh
-    (rf/dispatch-sync [::events/set-panel-height rh #_(min h rh)])))
+        w     (int (-> (by-id "app") .-clientWidth))
+        h     (int (-> (by-id "app") .-clientHeight))
+        rh    (int (/ (* w (ratio 1)) (ratio 0)))
+        rw    (int (/ (* h (ratio 0)) (ratio 1)))]
+    (println "w h rw rh" w h rw rh)
+    (rf/dispatch-sync [::events/set-panel-width (min w rw)])
+    ;; TODO: Don't know how to change font size relatively both to vw and to vh
+    (rf/dispatch-sync [::events/set-panel-height (min h rh)])))
 
 (defn init []
   (rf/dispatch-sync [::events/initialize-db])
