@@ -21,7 +21,7 @@
    :int :mind
    :pow :mind})
 
-(defonce ^:private page-idx (reagent/atom 0))
+(defonce page-idx (reagent/atom 0))
 
 (defn- move-page [diff]
   (swap! page-idx #(Math/abs (rem (+ diff %) 2)))
@@ -38,15 +38,17 @@
           {{:keys [scout ranger sage]} :packages}             :reference-values} char]
      [:div.nes-container.is-dark.is-rounded.grid-container {:style {:width (vw 90) :height (vw 50)}}
       [:div.aux-left
-       [:div.nes-container.is-dark.is-rounded.d-flex.flex-row.align-items-center.justify-content-center
-        {:style {:height (vw 7)}
-         :on-click #(move-page -1)}
-        [:div "◁"]]]
+       [:div.d-flex.flex-row.align-items-center.justify-content-center.w-100.h-100
+        [:div.nes-container.is-dark.is-rounded.d-flex.flex-row.align-items-center.justify-content-center
+         {:style {:height (vw 7)}
+          :on-click #(move-page -1)}
+         [:div "◁"]]]]
       [:div.aux-right
-       [:div.nes-container.is-dark.is-rounded.d-flex.flex-row.align-items-center.justify-content-center
-        {:style {:height (vw 7)}
-         :on-click #(move-page 1)}
-        [:div "▷"]]]
+       [:div.d-flex.flex-row.align-items-center.justify-content-center.w-100.h-100
+        [:div.nes-container.is-dark.is-rounded.d-flex.flex-row.align-items-center.justify-content-center
+         {:style {:height (vw 7)}
+          :on-click #(move-page 1)}
+         [:div "▷"]]]]
       [:div.status {:style {:font-size (vw 1.5)}}
        [:div.nes-container.is-dark.is-rounded.h-100
         [:div (str first " " middle " " last)] ; Name
@@ -123,35 +125,101 @@
                             [:td.center (->str (l :oral))]
                             [:td.center (->str (l :literal))]])))]))]]])])
 
+(def skill-key->str
+  {:general     "戦闘特技"
+   :sorcerer    "真言魔法"
+   :conjurer    "操霊魔法"
+   :priest      "神聖魔法"
+   :fairy-tamer "妖精魔法"
+   :enhancer    "錬技"
+   :bird        "バード"
+   :songs       "呪歌"
+   :finales     "終律"
+   :rider       "騎芸"
+   :alchemist   "錬金術"
+   :war-leader  "鼓咆"
+   :mistic      "占瞳"
+   :artisan     "呪印"})
+
+(def skills
+  [:general
+   :sorcerer
+   :conjurer
+   :priest
+   :fairy-tamer
+   :enhancer
+   :bird
+   :songs
+   :finales
+   :rider
+   :alchemist
+   :war-leader
+   :mistic
+   :artisan])
+
 (defn- status-skills [char idx]
   [:div#character-status-skills
    [:div.nes-container.is-dark.is-rounded.grid-container {:style {:width (vw 90) :height (vw 50)}}
     [:div.aux-left
-     [:div.nes-container.is-dark.is-rounded.d-flex.flex-row.align-items-center.justify-content-center
-      {:style {:height (vw 7)}
-       :on-click #(move-page -1)}
-      [:div "◁"]]]
+     [:div.d-flex.flex-row.align-items-center.justify-content-center.w-100.h-100
+      [:div.nes-container.is-dark.is-rounded.d-flex.flex-row.align-items-center.justify-content-center
+       {:style {:height (vw 7)}
+        :on-click #(move-page -1)}
+       [:div "◁"]]]]
     [:div.aux-right
-     [:div.nes-container.is-dark.is-rounded.d-flex.flex-row.align-items-center.justify-content-center
-      {:style {:height (vw 7)}
-       :on-click #(move-page 1)}
-      [:div "▷"]]]
+     [:div.d-flex.flex-row.align-items-center.justify-content-center.w-100.h-100
+      [:div.nes-container.is-dark.is-rounded.d-flex.flex-row.align-items-center.justify-content-center
+       {:style {:height (vw 7)}
+        :on-click #(move-page 1)}
+       [:div "▷"]]]]
     [:div.abilities {:style {:font-size (vw 1.5)}}
      [:div.nes-container.is-dark.is-rounded.h-100
-      [:h4.ml-2 "技能"]
+      [:div.ml-2 "技能"]
+      [:hr]
       (into [:div.d-flex.flex-row]
-            (for [groups (let [rows 7] (partition rows rows (repeat {}) (char :abilities)))]
+            (for [groups (let [rows 7] (partition rows rows (repeat nil) (char :abilities)))]
               [:table.nes-table.is-dark.text-nowrap {:style {:min-width (vw 20)}}
                (into [:tbody]
-                     (for [a groups]
+                     (for [a groups :when a]
                        [:tr
                         [:td (a :name)]
-                        [:td.center (a :level)]]))]))]]
-    [:div.skills
-     ]
-    ]])
+                        [:td.center (str "Lv " (a :level))]]))]))]]
+    [:div.skills {:style {:font-size (vw 1.5)}}
+     [:div.nes-container.is-dark.is-rounded.h-100
+      (into [:div.d-flex.flex-row {:style {:width (vw 72) :overflow "auto"}}]
+            (for [key skills]
+              (when (-> char :skills key)
+                (if (not= key :bird)
+                  [:div.nes-container.is-dark.is-rounded.text-nowrap
+                   [:div (skill-key->str key)]
+                   [:hr]
+                   [:div {:style {:height (vw 17) :overflow "auto"}}
+                    (for [item (-> char :skills key)]
+                      [:div item])]]
+                  (when (or (-> char :skills :bird :songs)
+                            (-> char :skills :bird :finales))
+                    [:div.nes-container.is-dark.is-rounded.text-nowrap
+                     [:div (skill-key->str key)]
+                     [:hr]
+                     [:div.d-flex.flex-row
+                      [:div {:style {:margin-right (vw 1)}}
+                       [:div "呪歌"]
+                       [:hr]
+                       [:div {:style {:height (vw 15) :overflow "auto"}}
+                        (for [item (-> char :skills :bird :songs)]
+                          [:div item])]]
+                      [:div
+                       [:div "終律"]
+                       [:hr]
+                       [:div {:style {:height (vw 15) :overflow "auto"}}
+                        (for [item (-> char :skills :bird :finales)]
+                          [:div item])]]]])))))]]]])
 
-(defn main [char idx]
+(defn- container [char idx]
   (case @page-idx
     0 [status-main char idx]
     1 [status-skills char idx]))
+
+(defn main [char idx]
+  (reset! page-idx 0)
+  [container char idx])

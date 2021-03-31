@@ -84,77 +84,91 @@
 (def debug-char
   {:equipments {},
    :accessories
-   {:head [],
-    :foot [],
-    :neck [],
-    :face [],
-    :back [],
-    :waist [],
-    :others [],
-    :left-hand [],
-    :ear [],
+   {:head       [],
+    :foot       [],
+    :neck       [],
+    :face       [],
+    :back       [],
+    :waist      [],
+    :others     [],
+    :left-hand  [],
+    :ear        [],
     :right-hand []},
-   :abilities [{:name "ファイター", :level 2}
-               {:name "グラップラー", :level 1}
-               {:name "フェンサー", :level 1}
-               {:name "シューター", :level 1}
-               {:name "ソーサラー", :level 1}
-               {:name "コンジャラー", :level 1}
-               {:name "プリースト", :level 1}
-               {:name "フェアリーテイマー", :level 1}
-               {:name "マギテック", :level 1}
-               {:name "デーモンルーラー", :level 1}
-               {:name "ドルイド", :level 1}
-               {:name "グリモワール", :level 1}
-               {:name "スカウト", :level 1}
-               {:name "レンジャー", :level 1}
-               {:name "セージ", :level 1}
-               {:name "エンハンサー", :level 1}
-               {:name "バード", :level 1}
-               {:name "ライダー", :level 1}
-               {:name "アルケミスト", :level 1}
-               {:name "ウォーリーダー", :level 1}
-               {:name "ミスティック", :level 1}],
+   :abilities  [{:name "ファイター", :level 2}
+                {:name "グラップラー", :level 1}
+                {:name "フェンサー", :level 1}
+                {:name "シューター", :level 1}
+                {:name "ソーサラー", :level 1}
+                {:name "コンジャラー", :level 1}
+                {:name "プリースト", :level 1}
+                {:name "フェアリーテイマー", :level 1}
+                {:name "マギテック", :level 1}
+                {:name "デーモンルーラー", :level 1}
+                {:name "ドルイド", :level 1}
+                {:name "グリモワール", :level 1}
+                {:name "スカウト", :level 1}
+                {:name "レンジャー", :level 1}
+                {:name "セージ", :level 1}
+                {:name "エンハンサー", :level 1}
+                {:name "バード", :level 1}
+                {:name "ライダー", :level 1}
+                {:name "アルケミスト", :level 1}
+                {:name "ウォーリーダー", :level 1}
+                {:name "ミスティック", :level 1}],
    :reference-values
-   {:damage-bonus 5,
-    :defense 0,
-    :hit 4,
-    :dodge 4,
-    :resistance {:con 5, :pow 4},
+   {:damage-bonus  5,
+    :defense       0,
+    :hit           4,
+    :dodge         4,
+    :resistance    {:con 5, :pow 4},
     :magical-power {},
-    :mobility {:limited 3, :normal 16, :sprint 48},
+    :mobility      {:limited 3, :normal 16, :sprint 48},
     :packages
-    {:scout {:dex 0, :agi 0, :int 0},
+    {:scout  {:dex 0, :agi 0, :int 0},
      :ranger {:dex 3, :agi 3, :int 3},
-     :sage {:int 0}}},
-   :skills {:general ["防具習熟A/非金属鎧"]},
+     :sage   {:int 0}}},
+   :skills     {:general    ["防具習熟A/非金属鎧" "みょんショタ" "すけっと" "biim兄貴" "龍のほこら"
+                             "メカタツノコ" "尾張入道" "氷結城" "メガトンコイン" "ピエリ守山" "竜宮城"
+                             "りゅうひめ" "リセ回数"]
+                :sorcerer   ["ぎょろん" "テストラン" "なぁでこ" "着ボイス" "突くゥ＾〜"
+                             "もう終わりだぁ！" "かぶとわり"]
+                :enhancer   ["野田内閣" "乙姫" "シードラゴン" "ボス部屋" "次レベル" "ビアンカ" "ジャミ"
+                             "クロコダイン" "うつぼうず" "ロバロバ" "ばーりあ" "ちょうりき" "運ゲー"
+                             "効く草" "ぴゅ〜ん" "DROP"]
+                :conjurer   ["ヱビスビール"]
+                :priest     ["渦潮の胴"]
+                :war-leader ["フヨウラ！"]
+                :alchemist  ["疲れたもぉ〜ん"]
+                :mistic     ["今回はここまでです"]
+                :bird       {:songs   ["ご視聴ありがとうございました"]
+                             :finales ["ないです"]}},
    :status
    {:level 2, :max-hp 26, :max-mp 14, :hp 26, :mp 14, :exp 1000, :honor 0},
    :personality
-   {:age 20,
-    :name {:middle "", :first "メイトリウス", :last "コルゲンバリ"},
+   {:age     20,
+    :name    {:middle "", :first "メイトリウス", :last "コルゲンバリ"},
     :species {:name "ナイトメア", :origin "ドワーフ"},
-    :gender "male"},
+    :gender  "male"},
    :options
    {:nature
     {:infancy
      {:happening {:abstract "家族を失った（父）"},
       :event
       {:abstract "山野を己の庭として",
-       :detail "野を駆け、森を抜け、山を越える。自然の環境は、きみのあらゆる能力を試し、同時に鍛え上げた。"}},
+       :detail   "野を駆け、森を抜け、山を越える。自然の環境は、きみのあらゆる能力を試し、同時に鍛え上げた。"}},
      :adolescence
      {:departure-reason {:abstract "家族をすべて失ったので"},
       :event
       {:abstract "戦いの訓練を受けた",
-       :detail "兵士としてか、道場でか。きみは戦いの訓練を積んだ時期がある。そこで、的確な防具の扱いについて学ぶことができた。"}},
+       :detail   "兵士としてか、道場でか。きみは戦いの訓練を積んだ時期がある。そこで、的確な防具の扱いについて学ぶことができた。"}},
      :born
      {:abstract "鉱山の子",
       :detail
       "鍛冶に使う鉱物や宝石を採掘する工夫の家に生まれる。母親は死にかける。暗闇の中を明かりもなく生活する環境にきみは馴染めず、 惨めに育つ。 "},
      :childhood
      {:happening {:abstract "蛮族の血が流れている"},
-      :event {:abstract "自然の中で学ぶ", :detail "自然の中で生き、自然から生を得た。"}}}},
-   :items [],
+      :event     {:abstract "自然の中で学ぶ", :detail "自然の中で生き、自然から生を得た。"}}}},
+   :items      [],
    :languages
    [{:name "交易共通語", :oral true, :literal true}
     {:name "ドワーフ語", :oral true, :literal true}
@@ -168,18 +182,17 @@
     {:name "地方語(関西)", :oral true, :literal true}],
    :parameters
    {:initial {:int 5, :pow 5, :str 4, :con 4, :dex 8, :agi 8},
-    :base {:mind 8, :technique 7, :physique 15},
-    :growth {:int 1, :pow 1, :str 1, :con 1, :dex 1, :agi 1},
-    :total {:int 14, :pow 14, :str 20, :con 20, :dex 16, :agi 16},
-    :bonus {:int 2, :pow 2, :str 3, :con 3, :dex 2, :agi 2}}})
+    :base    {:mind 8, :technique 7, :physique 15},
+    :growth  {:int 1, :pow 1, :str 1, :con 1, :dex 1, :agi 1},
+    :total   {:int 14, :pow 14, :str 20, :con 20, :dex 16, :agi 16},
+    :bonus   {:int 2, :pow 2, :str 3, :con 3, :dex 2, :agi 2}}})
 
 (defn character-show-status []
-  [status/main debug-char 4]
-  ;; (let [char @*cur-character]
-  ;;   (if char
-  ;;     [status/main char]
-  ;;     [:div]))
-  )
+  ;; [status/main debug-char 4]
+  (let [char @*cur-character]
+    (if char
+      [status/main char @*cur-character-idx]
+      [:div])))
 
 (defn main []
   [:div#home.w-100.h-100.p-2

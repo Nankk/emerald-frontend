@@ -72,31 +72,31 @@
         [:div
          [:h5 (str "生まれ：" babst)]
          [:hr]
-         [:h6 bdetail]
-         [:h6 "　"]
+         [:h5 bdetail]
+         [:h5 "　"]
          [:h5 (str "幼少期：" iabst)]
          [:hr]
-         [:h6 idetail]
-         [:h6 "　"]
+         [:h5 idetail]
+         [:h5 "　"]
          [:h5 (str "幼少期のハプニング")]
          [:hr]
-         [:h6 ihappen]
-         [:h6 "　"]
+         [:h5 ihappen]
+         [:h5 "　"]
          [:h5 (str "少年期：" cabst)]
          [:hr]
-         [:h6 cdetail]
-         [:h6 "　"]
+         [:h5 cdetail]
+         [:h5 "　"]
          [:h5 (str "少年期のハプニング")]
          [:hr]
-         [:h6 chappen]
-         [:h6 "　"]
+         [:h5 chappen]
+         [:h5 "　"]
          [:h5 (str "青年期：" aabst)]
          [:hr]
-         [:h6 adetail]
-         [:h6 "　"]
+         [:h5 adetail]
+         [:h5 "　"]
          [:h5 "冒険に出た理由"]
          [:hr]
-         [:h6 areason]]]]))
+         [:h5 areason]]]]))
 
   (defn- confirmation-skills [character]
     [:div.skills.w-100.h-100
@@ -108,21 +108,21 @@
        (into [:div]
              (for [ability (character :abilities)]
                [:div.d-flex.flex-row.justify-content-between.w-100
-                [:h6 (ability :name)]
-                [:h6 (str "Lv " (ability :level))]]))]
+                [:h5 (ability :name)]
+                [:h5 (str "Lv " (ability :level))]]))]
       [:div {:style {:width        "33%"
                      :border-right (str (vw 0.4) " solid " (colors/base 10))}}
        [:h5 "戦闘特技"]
        [:hr]
        (into [:div]
              (for [skill (get-in character [:skills :general])]
-               [:h6 skill]))]
+               [:h5 skill]))]
       [:div {:style {:width "33%"}}
        [:h5 "言語"]
        [:hr]
        (into [:div]
              (for [language (character :languages)]
-               [:h6 (str (language :name) " [" (when (language :oral) "話") (when (language :literal) "読") "]")]))]]])
+               [:h5 (str (language :name) " [" (when (language :oral) "話") (when (language :literal) "読") "]")]))]]])
 
   (defn- confirmation-params [character]
     [:div.params.w-100.h-100
@@ -138,10 +138,10 @@
              {species :name origin :origin}           (get-in character [:personality :species])]
          [:div
           [:h5 (str fname
-                    (when-not (empty? mname) (str "・" mname))
-                    (when-not (empty? lname) (str "・" lname))
+                    (when-not (empty? mname) (str " " mname))
+                    (when-not (empty? lname) (str " " lname))
                     " (" (get-in character [:personality :age]) ")")]
-          [:h6 (str "[ " species (when origin (str "（" origin "）")) " ]")]])
+          [:h5 (str "[ " species (when origin (str "（" origin "）")) " ]")]])
        (let [{{{:keys [technique physique mind]}      :base
                {stg :str :keys [dex agi con int pow]} :initial} :parameters}
              character
@@ -152,20 +152,20 @@
              exp            (- (get-in character [:status :exp]) (* (count (get-in character [:additional-items :abilities])) 500))]
          [:div.d-flex.flex-row.justify-content-between.w-100
           [:div.mr-2
-           [:h6 (str "Lv " lv)]
-           [:h6 (str "HP " hp "/" hp)]
-           [:h6 (str "MP " mp "/" mp)]
-           [:h6 (str "Exp " exp)]]
+           [:h5 (str "Lv " lv)]
+           [:h5 (str "HP " hp "/" hp)]
+           [:h5 (str "MP " mp "/" mp)]
+           [:h5 (str "Exp " exp)]]
           [:div
-           [:h6 "　"]
-           [:h6 (str "筋力 " (+ stg physique))]
-           [:h6 (str "知力 " (+ int mind))]
-           [:h6 (str "器用 " (+ dex technique))]]
+           [:h5 "　"]
+           [:h5 (str "筋力 " (+ stg physique))]
+           [:h5 (str "知力 " (+ int mind))]
+           [:h5 (str "器用 " (+ dex technique))]]
           [:div
-           [:h6 "　"]
-           [:h6 (str "生命 " (+ con physique))]
-           [:h6 (str "精神 " (+ pow mind))]
-           [:h6 (str "敏捷 " (+ agi technique))]]])]]])
+           [:h5 "　"]
+           [:h5 (str "生命 " (+ con physique))]
+           [:h5 (str "精神 " (+ pow mind))]
+           [:h5 (str "敏捷 " (+ agi technique))]]])]]])
 
   (defan- register-character-to-server [character-formatted]
     (panel/show-modal :confirmation-register)
@@ -211,7 +211,7 @@
        [panel/modal :confirmation-failure [(vw 20) (vw 35)]
         [:div.nes-container.is-dark.is-rounded
          [:h3 "作成に失敗しました。"]
-         [:h6 @*errors]
+         [:h5 @*errors]
          [:button.nes-btn.is-primary {:on-click #(panel/close-modal :confirmation-failure)}
           "OK"]]]])))
 
