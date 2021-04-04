@@ -40,25 +40,24 @@
     "Returns a formatted character for character storage server.
     :additional-items are merged into main status and removed."
     [character]
-    (let [specific (cond-> character
-                     (get-in character [:personality :species :origin])
-                     (update ,, :languages (comp vec concat)
-                                ((first
-                                  (filter #(= (% :name) (get-in character [:personality :species :origin]))
-                                          const/species-list))
-                                 :languages))
-
-                     (get-in character [:additional-items :abilities])
-                     (update ,, :abilities #(merge-abilities % (get-in character [:additional-items :abilities]))))
-          general (as-> specific c
-                    (update c :languages (comp vec concat) (get-in character [:additional-items :languages]))
-                    (dissoc c :additional-items)
-                    (walk/postwalk
-                     #(if (map? %)
-                        (into {} (remove (comp nil? second) %))
-                        %)
-                     c))]
-      general))
+    (let [c character
+          c (cond-> c
+              ;; Origin
+              (get-in character [:personality :species :origin])
+              (update ,, :languages (comp vec concat)
+                         ((first
+                           (filter #(= (% :name) (get-in character [:personality :species :origin]))
+                                   const/species-list))
+                          :languages))
+              ;; Abilities
+              (get-in character [:additional-items :abilities])
+              (update ,, :abilities #(merge-abilities % (get-in character [:additional-items :abilities]))))
+          c (update c :languages (comp vec concat) (get-in character [:additional-items :languages]))
+          c (let [exp-diff (* (count (get-in character [:additional-items :abilities])) 500)]
+              (update-in c [:status :exp :free] #(- % exp-diff)))
+          c (dissoc c :additional-items)
+          c (walk/postwalk #(if (map? %) (into {} (remove (comp nil? second) %)) %) c)]
+      c))
 
   (defn- confirmation-biography [character]
     (let [{{{{babst :abstract bdetail :detail}                                                :born
@@ -115,7 +114,7 @@
        [:h5 "戦闘特技"]
        [:hr]
        (into [:div]
-             (for [skill (get-in character [:skills :general])]
+             (for [skill (get-in character [:skills :general :manual])]
                [:h5 skill]))]
       [:div {:style {:width "33%"}}
        [:h5 "言語"]
@@ -127,7 +126,7 @@
   (defn- confirmation-params [character]
     [:div.params.w-100.h-100
      [:div.nes-container.is-dark.is-rounded.w-100.h-100.d-flex.flex-row
-      [:div.nes-container.is-dark.is-rounded {:style {:width    (vw 15)     :height  (vw 15)
+      [:div.nes-container.is-dark.is-rounded {:style {:width    (vw 15)    :height  (vw 15)
                                                       :position "relative" :padding (vw 1)}}
        ;; Picture area
        (if-let [image (get-in character [:options :image])]
@@ -145,17 +144,18 @@
        (let [{{{:keys [technique physique mind]}      :base
                {stg :str :keys [dex agi con int pow]} :initial} :parameters}
              character
-             lv             (apply max (map :level (character :abilities)))
-             hp             (+ (+ physique con) (* lv 3))
-             magic-lv-total (reduce + (get (filter #(some #{(% :name)} const/magical-skills) (character :abilities)) 1))
-             mp             (+ (+ mind pow) (* magic-lv-total 3))
-             exp            (- (get-in character [:status :exp]) (* (count (get-in character [:additional-items :abilities])) 500))]
+             lv                   (apply max (map :level (character :abilities)))
+             hp                   (+ (+ physique con) (* lv 3))
+             magic-lv-total       (reduce + (get (filter #(some #{(% :name)} const/magical-abilities)
+                                                         (character :abilities)) 1))
+             mp                   (+ (+ mind pow) (* magic-lv-total 3))
+             {:keys [total free]} (-> character :status :exp)]
          [:div.d-flex.flex-row.justify-content-between.w-100
           [:div.mr-2
            [:h5 (str "Lv " lv)]
            [:h5 (str "HP " hp "/" hp)]
            [:h5 (str "MP " mp "/" mp)]
-           [:h5 (str "Exp " exp)]]
+           [:h5 (str "Exp " free "/" total)]]
           [:div
            [:h5 "　"]
            [:h5 (str "筋力 " (+ stg physique))]
@@ -179,7 +179,7 @@
       true))
 
   (defn confirmation-main []
-    (let [transient @(rf/subscribe [::subs/cur-character])
+    (let [transient @(rf/subscribe [::subs/cur-char])
           character (character-formatted transient)]
       [:div#cc-nature-confirmation.w-100.h-100.p-1
        [:div.grid-container.w-100.h-100
@@ -243,7 +243,7 @@
                           :base64    (str/replace (<p! (js/toDataURLPromise file)) #"data.*base64," "")
                           :extension ((re-find #"\.([^\.]+)$" (.-name file)) 1)}
                          (<! (<get-image-size file)))]
-        (rf/dispatch-sync [::events/set-character-param [:options :image] image])
+        (rf/dispatch-sync [::events/set-char-param [:options :image] image])
         true)
       (do (panel/show-modal :name-error)
           false)))
@@ -267,7 +267,7 @@
                                            :position "absolute" :left   (vw -1.5) :top     (vw -1.5)}}
         [:i.fas.fa-cloud-upload-alt.fa-sm]]]
       ;; Picture area
-      (if-let [image @(rf/subscribe [::subs/cur-character-param [:options :image]])]
+      (if-let [image @(rf/subscribe [::subs/cur-char-param [:options :image]])]
         [:img.profile-image.w-100.h-100 {:src (str "data:" (image :type) ";base64," (image :base64))}]
         [:div "I am a default image!"])]
      ])
@@ -282,7 +282,7 @@
       [(first-name species-key) (last-name species-key)]))
 
   (defn- name-input []
-    (let [{fname :first lname :last} @(rf/subscribe [::subs/cur-character-param [:personality :name]])]
+    (let [{fname :first lname :last} @(rf/subscribe [::subs/cur-char-param [:personality :name]])]
       [:div.w-100
        [:div.d-flex.flex-row.align-items-center.justify-content-end.w-100
         [:div.mr-2 "年齢"]
@@ -290,10 +290,10 @@
          {:style         {:width (vw 20) :height (vw 5)}
           :type          "text"
           :placeholder   "Your age"
-          :default-value @(rf/subscribe [::subs/cur-character-param [:personality :age]])
+          :default-value @(rf/subscribe [::subs/cur-char-param [:personality :age]])
           :on-blur       #(let [v   (.. % -target -value)
                                 age (if (js/isNaN v) 20 (js/parseInt v))]
-                            (rf/dispatch-sync [::events/set-character-param [:personality :age] age])
+                            (rf/dispatch-sync [::events/set-char-param [:personality :age] age])
                             (set! (.. % -target -value) age))}]]
        [:div.d-flex.flex-row.align-items-center.justify-content-end.w-100
         [:div.mr-2 "名"]
@@ -303,7 +303,7 @@
           :placeholder   "First name"
           :default-value fname
           :on-blur       #(let [v (.. % -target -value)]
-                            (rf/dispatch-sync [::events/set-character-param [:personality :name :first] v])
+                            (rf/dispatch-sync [::events/set-char-param [:personality :name :first] v])
                             (set! (.. % -target -value) v))}]]
        [:div.d-flex.flex-row.align-items-center.justify-content-end.w-100
         [:div.mr-2 "姓"]
@@ -313,14 +313,14 @@
           :placeholder   "Last name"
           :default-value lname
           :on-blur       #(let [v (.. % -target -value)]
-                            (rf/dispatch-sync [::events/set-character-param [:personality :name :last] v])
+                            (rf/dispatch-sync [::events/set-char-param [:personality :name :last] v])
                             (set! (.. % -target -value) v))}]]
        [:div.d-flex.flex-row.align-items-center.justify-content-end.w-100
         [:button.nes-btn.is-primary
          {:on-click
           #(do (let [[rand-first rand-last] (random-name
-                                             @(rf/subscribe [::subs/cur-character-param [:personality :gender]])
-                                             @(rf/subscribe [::subs/cur-character-param [:personality :species]]))]
+                                             @(rf/subscribe [::subs/cur-char-param [:personality :gender]])
+                                             @(rf/subscribe [::subs/cur-char-param [:personality :species]]))]
                  (when (str/blank? fname)
                    (set! (-> js/document (.getElementById "cc-nature-name-first") .-value) rand-first))
                  (when (= "" lname)
@@ -347,8 +347,8 @@
         :choices [{:text     "はい"
                    :on-click #(let [fname (-> js/document (.getElementById "cc-nature-name-first") .-value)
                                     lname (-> js/document (.getElementById "cc-nature-name-last") .-value)]
-                                (rf/dispatch-sync [::events/set-character-param [:personality :name :first] fname])
-                                (rf/dispatch-sync [::events/set-character-param [:personality :name :last] lname])
+                                (rf/dispatch-sync [::events/set-char-param [:personality :name :first] fname])
+                                (rf/dispatch-sync [::events/set-char-param [:personality :name :last] lname])
                                 (container/switch-panels :cc-nature-name :cc-nature-confirmation :left))}
                   {:text "いいえ" :on-click #(panel/close-modal :name-confirm)}]]]]
      [panel/modal :name-error [(vw 20) (vw 30)]
@@ -380,7 +380,7 @@
         :choices [{:text "はい"
                    :on-click
                    #(do (rf/dispatch-sync
-                         [::events/set-character-param [:options :nature :adolescence :departure-reason]
+                         [::events/set-char-param [:options :nature :adolescence :departure-reason]
                           {:abstract reason}])
                         (container/switch-panels :cc-nature-reason :cc-nature-name :left))}
                   {:text "いいえ" :on-click #(panel/close-modal :reason-detail)}]
@@ -488,7 +488,7 @@
          [list/choice
           :header [:h3 "これでいいですか？"]
           :choices [{:text     "はい"
-                     :on-click #(do (rf/dispatch-sync [::events/set-character-param [:options :nature period :happening]
+                     :on-click #(do (rf/dispatch-sync [::events/set-char-param [:options :nature period :happening]
                                                        (happening-result happening)])
                                     (close-all-modals)
                                     (container/switch-panels move-from move-to :left))}
@@ -632,10 +632,10 @@
         :choices [{:text "はい"
                    :on-click
                    #(do (rf/dispatch-sync
-                         [::events/set-character-param [:options :nature :adolescence :event]
+                         [::events/set-char-param [:options :nature :adolescence :event]
                           {:abstract       (adolescence :abstract)
                            :detail (adolescence :detail)}])
-                        (rf/dispatch-sync [::events/set-character-param [:skills :general]
+                        (rf/dispatch-sync [::events/set-char-param [:skills :general :manual]
                                            [(str/replace (adolescence :skill) #"\*\*" (or @*proficiency ""))]])
                         (container/switch-panels :cc-nature-adolescence :cc-nature-reason :left))}
                   {:text "いいえ" :on-click #(panel/close-modal :adolescence-detail)}]
@@ -655,8 +655,8 @@
                       (for [adolescence
                             (get-in @*adolescence-data
                                     (adolescence-keys
-                                     @(rf/subscribe [::subs/cur-character-param [:personality :job]])
-                                     @(rf/subscribe [::subs/cur-character-param [:options :nature :infancy :event :type]])))]
+                                     @(rf/subscribe [::subs/cur-char-param [:personality :job]])
+                                     @(rf/subscribe [::subs/cur-char-param [:options :nature :infancy :event :type]])))]
                         ^{:key (adolescence :abstract)}
                         {:text (adolescence :abstract) :on-click (fn []
                                                                    (reset! *cur-adolescence adolescence)
@@ -665,8 +665,8 @@
   (defn- random-adolescence []
     (let [adolescences (get-in @*adolescence-data
                                (adolescence-keys
-                                @(rf/subscribe [::subs/cur-character-param [:personality :job]])
-                                @(rf/subscribe [::subs/cur-character-param [:options :nature :infancy :event :type]])))]
+                                @(rf/subscribe [::subs/cur-char-param [:personality :job]])
+                                @(rf/subscribe [::subs/cur-char-param [:options :nature :infancy :event :type]])))]
       (adolescences (rand-int (count adolescences)))))
 
   (defn adolescence-main []
@@ -729,13 +729,17 @@
         :choices [{:text "はい"
                    :on-click
                    #(do (rf/dispatch-sync
-                         [::events/set-character-param [:options :nature :childhood :event]
+                         [::events/set-char-param [:options :nature :childhood :event]
                           {:abstract       (childhood :abstract)
                            :detail (childhood :detail)}])
                         (when-let [ability (childhood :ability)]
-                          (rf/dispatch-sync [::events/set-character-param [:additional-items :abilities] [{:name ability :level 1}]]))
+                          (rf/dispatch-sync [::events/set-char-param
+                                             [:additional-items :abilities]
+                                             [{:name ability :level 1}]]))
                         (when @*language
-                          (rf/dispatch-sync [::events/set-character-param [:additional-items :languages] [@*language]]))
+                          (rf/dispatch-sync [::events/set-char-param
+                                             [:additional-items :languages]
+                                             [@*language]]))
                         (container/switch-panels :cc-nature-childhood :cc-nature-happening-childhood :left))}
                   {:text "いいえ" :on-click #(panel/close-modal :childhood-detail)}]
         :direction :horizontal]]))
@@ -749,7 +753,7 @@
                       (for [childhood (@*childhood-data
                                        (keyword
                                         (const/job->category
-                                         @(rf/subscribe [::subs/cur-character-param [:personality :job]]))))]
+                                         @(rf/subscribe [::subs/cur-char-param [:personality :job]]))))]
                         ^{:key (childhood :abstract)}
                         {:text (childhood :abstract) :on-click (fn []
                                                                  (reset! *cur-childhood childhood)
@@ -759,7 +763,7 @@
     (let [childhoods (@*childhood-data
                       (keyword
                        (const/job->category
-                        @(rf/subscribe [::subs/cur-character-param [:personality :job]]))))]
+                        @(rf/subscribe [::subs/cur-char-param [:personality :job]]))))]
       (childhoods (rand-int (count childhoods)))))
 
   (defn childhood-main []
@@ -794,16 +798,16 @@
       true))
 
   (defn- set-infancy-to-cur-character [infancy]
-    (rf/dispatch-sync [::events/set-character-param [:options :nature :infancy :event]
+    (rf/dispatch-sync [::events/set-char-param [:options :nature :infancy :event]
                        {:abstract (infancy :abstract)
                         :detail   (infancy :detail)
                         :type     (infancy :type)}])
-    (rf/dispatch-sync [::events/set-character-param [:parameters :initial :dex] (infancy :A)])
-    (rf/dispatch-sync [::events/set-character-param [:parameters :initial :agi] (infancy :B)])
-    (rf/dispatch-sync [::events/set-character-param [:parameters :initial :str] (infancy :C)])
-    (rf/dispatch-sync [::events/set-character-param [:parameters :initial :con] (infancy :D)])
-    (rf/dispatch-sync [::events/set-character-param [:parameters :initial :int] (infancy :E)])
-    (rf/dispatch-sync [::events/set-character-param [:parameters :initial :pow] (infancy :F)]))
+    (rf/dispatch-sync [::events/set-char-param [:parameters :initial :dex] (infancy :A)])
+    (rf/dispatch-sync [::events/set-char-param [:parameters :initial :agi] (infancy :B)])
+    (rf/dispatch-sync [::events/set-char-param [:parameters :initial :str] (infancy :C)])
+    (rf/dispatch-sync [::events/set-char-param [:parameters :initial :con] (infancy :D)])
+    (rf/dispatch-sync [::events/set-char-param [:parameters :initial :int] (infancy :E)])
+    (rf/dispatch-sync [::events/set-char-param [:parameters :initial :pow] (infancy :F)]))
 
   (defn- infancy-detail []
     (when-let [infancy @*cur-infancy]
@@ -831,14 +835,14 @@
        (vec
         (for [infancy (remove
                        #(re-find
-                         (re-pattern @(rf/subscribe [::subs/cur-character-param [:personality :job]]))
+                         (re-pattern @(rf/subscribe [::subs/cur-char-param [:personality :job]]))
                          (or (% :incompatible) ""))
                        (@*infancy-data
                         (keyword
-                         (str @(rf/subscribe [::subs/cur-character-param [:personality :species :name]])
+                         (str @(rf/subscribe [::subs/cur-char-param [:personality :species :name]])
                               "-"
                               (const/job->category
-                               @(rf/subscribe [::subs/cur-character-param [:personality :job]]))))))]
+                               @(rf/subscribe [::subs/cur-char-param [:personality :job]]))))))]
           {:text (infancy :abstract) :on-click (fn []
                                                  (reset! *cur-infancy infancy)
                                                  (panel/show-modal :infancy-detail))}))]]])
@@ -847,14 +851,14 @@
     (let [infancies (vec
                      (remove
                       #(re-find
-                        (re-pattern @(rf/subscribe [::subs/cur-character-param [:personality :job]]))
+                        (re-pattern @(rf/subscribe [::subs/cur-char-param [:personality :job]]))
                         (or (% :incompatible) ""))
                       (@*infancy-data
                        (keyword
-                        (str @(rf/subscribe [::subs/cur-character-param [:personality :species :name]])
+                        (str @(rf/subscribe [::subs/cur-char-param [:personality :species :name]])
                              "-"
                              (const/job->category
-                              @(rf/subscribe [::subs/cur-character-param [:personality :job]])))))))]
+                              @(rf/subscribe [::subs/cur-char-param [:personality :job]])))))))]
       (infancies (rand-int (count infancies)))))
 
   (defn infancy-main []
@@ -909,7 +913,7 @@
      [:h4 ((first (filter #(= (% :abstract) (@*human-noble :abstract)) reasons)) :detail)]])
 
   (defn- human-opts [born]
-    (when (and (= @(rf/subscribe [::subs/cur-character-param [:personality :species :name]]) "人間")
+    (when (and (= @(rf/subscribe [::subs/cur-char-param [:personality :species :name]]) "人間")
                (= (born :abstract) "貴族(都市)"))
       [:div
        (when-let [reasons (born :貴族)]
@@ -939,7 +943,7 @@
      [:h4 ((first (filter #(= (% :abstract) (@*nightmare-freedom :abstract)) freedoms)) :detail)]])
 
   (defn- nightmare-opts [born]
-    (when (= @(rf/subscribe [::subs/cur-character-param [:personality :species :name]]) "ナイトメア")
+    (when (= @(rf/subscribe [::subs/cur-char-param [:personality :species :name]]) "ナイトメア")
       [:div
        (let [origins (set (map #(nth % 1) (filter #(re-find #"origin-" (name (% 0))) born)))]
          (reset! *nightmare-origin (first origins))
@@ -949,7 +953,7 @@
          [nightmare-freedom freedoms])]))
 
   (defn- lycant-opts [born]
-    (when (= @(rf/subscribe [::subs/cur-character-param [:personality :species :name]]) "リカント")
+    (when (= @(rf/subscribe [::subs/cur-char-param [:personality :species :name]]) "リカント")
       (reset! *lycant-head (first (map :name (born :頭部))))
       [:div
        [:hr]
@@ -990,16 +994,16 @@
         :choices [{:text "はい"
                    :on-click
                    #(do
-                      (rf/dispatch-sync [::events/set-character-param [:options :nature :born] (born-result born)])
-                      (rf/dispatch-sync [::events/set-character-param [:personality :species :origin] @*nightmare-origin])
-                      (rf/dispatch-sync [::events/set-character-param [:personality :species :head] @*lycant-head])
+                      (rf/dispatch-sync [::events/set-char-param [:options :nature :born] (born-result born)])
+                      (rf/dispatch-sync [::events/set-char-param [:personality :species :origin] @*nightmare-origin])
+                      (rf/dispatch-sync [::events/set-char-param [:personality :species :head] @*lycant-head])
                       (container/switch-panels :cc-nature-born :cc-nature-infancy :left))}
                   {:text     "いいえ"
                    :on-click #(panel/close-modal :born-detail)}]
         :direction :horizontal]]))
 
   (defn- born-list []
-    (let [cur-species @(rf/subscribe [::subs/cur-character-param [:personality :species :name]])]
+    (let [cur-species @(rf/subscribe [::subs/cur-char-param [:personality :species :name]])]
       [:div.nes-container.is-dark.is-rounded.experience-list
        {:style {:width (vw 50) :height (vw 40)}}
        [:div.overflow-auto.w-100.h-100
@@ -1011,7 +1015,7 @@
                                                            (panel/show-modal :born-detail))}))]]]))
 
   (defn- random-born []
-    (let [cur-species @(rf/subscribe [::subs/cur-character-param [:personality :species :name]])
+    (let [cur-species @(rf/subscribe [::subs/cur-char-param [:personality :species :name]])
           borns       (@*born-data (keyword cur-species))]
       (borns (rand-int (count borns)))))
 
@@ -1048,13 +1052,16 @@
 
   (defn- job-icon [job]
     (let [has-aptitude? (aptitude-test
-                         @(rf/subscribe [::subs/cur-character-param [:personality :species :name]])
+                         @(rf/subscribe [::subs/cur-char-param [:personality :species :name]])
                          job)]
       [:button.nes-btn {:class    (when-not has-aptitude? "is-disabled")
-                        :style    {:height (vw 10) :width (vw 10) :background-color "#bbbbbb" :margin (vw 1) :color "#222222"}
+                        :style    {:height           (vw 10)   :width  (vw 10)
+                                   :background-color "#bbbbbb" :margin (vw 1) :color "#222222"}
                         :on-click (fn []
                                     (when has-aptitude?
-                                      (rf/dispatch-sync [::events/set-character-param [:personality :job] (job :name)])
+                                      (rf/dispatch-sync [::events/set-char-param
+                                                         [:personality :job]
+                                                         (job :name)])
                                       (reset! *cur-job job)))}
        [:h3 (job :name)]]))
 
@@ -1064,10 +1071,10 @@
       :header [:h3 "魔法系技能を選択してください"]
       :choices-size :h4
       :choices (vec (for [magical-ability ["ソーサラー" "コンジャラー" "プリースト"]]
-                      {:text magical-ability
+                      {:text     magical-ability
                        :on-click #(do (reset! *cur-magical-ability magical-ability)
                                       (rf/dispatch-sync
-                                       [::events/set-character-param [:abilities]
+                                       [::events/set-char-param [:abilities]
                                         (conj (@*cur-job :abilities) {:name magical-ability :level 2})])
                                       (container/switch-panels :cc-nature-job :cc-nature-born :left))}))]])
 
@@ -1085,7 +1092,7 @@
        (when-let [job @*cur-job]
          (let [{:keys [technique physique mind]}
                (const/base-params
-                @(rf/subscribe [::subs/cur-character-param [:personality :species :name]])
+                @(rf/subscribe [::subs/cur-char-param [:personality :species :name]])
                 (job :name))]
            [:div
             [:h3 (str (job :name) "（技：" technique " 体：" physique " 心：" mind "）")]
@@ -1096,12 +1103,12 @@
         :on-click
         #(do
            (let [base (const/base-params
-                       @(rf/subscribe [::subs/cur-character-param [:personality :species :name]])
+                       @(rf/subscribe [::subs/cur-char-param [:personality :species :name]])
                        (@*cur-job :name))]
-             (rf/dispatch-sync [::events/set-character-param [:parameters :base] base]))
-           (rf/dispatch-sync [::events/set-character-param [:status :exp] (@*cur-job :rest-exp)])
+             (rf/dispatch-sync [::events/set-char-param [:parameters :base] base]))
+           (rf/dispatch-sync [::events/set-char-param [:status :exp] (-> @*cur-job :exp)])
            (if-not (re-find #"魔法.士" (@*cur-job :name))
-             (do (rf/dispatch-sync [::events/set-character-param [:abilities] (@*cur-job :abilities)])
+             (do (rf/dispatch-sync [::events/set-char-param [:abilities] (@*cur-job :abilities)])
                  (container/switch-panels :cc-nature-job :cc-nature-born :left))
              (panel/show-modal :job-magical-fighter-opts)))}
        [:h3 "決定"]]
@@ -1128,9 +1135,9 @@
     ^{:key idx}
     [:button.nes-container.is-dark.is-rounded.w-100.h-100
      {:class    (idx->pos-class idx)
-      :on-click #(do (rf/dispatch-sync [::events/set-character-param [:personality :species :name] (species :name)])
+      :on-click #(do (rf/dispatch-sync [::events/set-char-param [:personality :species :name] (species :name)])
                      ;; At this point nightmare's language is empty because origin is not determined yet
-                     (rf/dispatch-sync [::events/set-character-param [:languages] (species :languages)])
+                     (rf/dispatch-sync [::events/set-char-param [:languages] (species :languages)])
                      (container/switch-panels :cc-nature-species :cc-nature-job :left))}
      [:div.h-25 [:h4 (species :name)]]
      [:hr]
@@ -1145,17 +1152,20 @@
       [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature-species :home :down)} [:h3 "△"]]
       [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "種族を選んでください"]]
       [:button.nes-btn.aux-right
-       {:style    {:color "#ffffff"
-                   :background-color (case @(rf/subscribe [::subs/cur-character-param [:personality :gender]])
+       {:style    {:color            "#ffffff"
+                   :background-color (case @(rf/subscribe [::subs/cur-char-param [:personality :gender]])
                                        "male"   "#1133ee"
-                                       "female" "#ff33dd")}
-        :on-click #(let [next (case @(rf/subscribe [::subs/cur-character-param [:personality :gender]])
-                                "male"   "female"
-                                "female" "male")]
-                     (rf/dispatch-sync [::events/set-character-param [:personality :gender] next]))}
-       [:h3 (case @(rf/subscribe [::subs/cur-character-param [:personality :gender]])
+                                       "female" "#ff33dd"
+                                       "#993399")}
+        :on-click #(let [next (case @(rf/subscribe [::subs/cur-char-param [:personality :gender]])
+                                "male"        "female"
+                                "female"      "lgbttiqq2sa"
+                                "male")]
+                     (rf/dispatch-sync [::events/set-char-param [:personality :gender] next]))}
+       [:h3 (case @(rf/subscribe [::subs/cur-char-param [:personality :gender]])
               "male"   "♂"
-              "female" "♀")]]
+              "female" "♀"
+              "◎")]]
       ;; Arrows
       [:div.d-flex.flex-row.align-items-center.justify-content-center.w-100.h-100.button-left
        [:button.nes-container.is-dark.is-rounded.text-center

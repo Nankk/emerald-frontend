@@ -50,40 +50,40 @@
   [{:name        "戦士"
     :description "いわゆるタンク。PTに1人は入れとかないと壊滅するんジャー"
     :abilities   [{:name "ファイター" :level 2}]
-    :rest-exp    1000}
+    :exp         {:total 3000 :free 1000}}
    {:name        "剣士"
     :description "紙装甲である代わりにガンガンクリティカル出すんジャー"
     :abilities   [{:name "フェンサー" :level 2}]
-    :rest-exp    1500}
+    :exp         {:total 3000 :free 1500}}
    {:name        "魔法戦士"
     :description "剣と魔法のよくばりセット"
     :abilities   [{:name "ファイター" :level 1}]
-    :rest-exp    0}
+    :exp         {:total 3500 :free 0}}
    {:name        "魔法剣士"
     :description "「まほうけん」が使える。わけではない。魔法と剣が使える"
     :abilities   [{:name "フェンサー" :level 1}]
-    :rest-exp    500}
+    :exp         {:total 3500 :free 500}}
    {:name        "拳闘士"
     :description "男と生まれたからには、誰でも一生の内一度は夢見る「地上最強の男」。グラップラーとは、「地上最強の男」を目指す格闘士のことである（例のBGM）"
     :abilities   [{:name "グラップラー" :level 2}]
-    :rest-exp    1000}
+    :exp         {:total 3000 :free 1000}}
    {:name        "密偵"
     :description "スパイ業を営む。国家の陰謀の成否は彼に掛かっている"
     :abilities   [{:name "スカウト" :level 2}
                   {:name "フェンサー" :level 1}]
-    :rest-exp    1000}
+    :exp         {:total 3000 :free 1000}}
    {:name        "魔術師"
     :description "黒魔道士のこと"
     :abilities   [{:name "ソーサラー" :level 2}]
-    :rest-exp    1000}
+    :exp         {:total 3000 :free 1000}}
    {:name        "操霊術師"
     :description "公式イラストのおねえさんがエロい"
     :abilities   [{:name "コンジャラー" :level 2}]
-    :rest-exp    1000}
+    :exp         {:total 3000 :free 1000}}
    {:name        "神官"
     :description "白魔道士のこと"
     :abilities   [{:name "プリースト" :level 2}]
-    :rest-exp    1000}])
+    :exp         {:total 3000 :free 1000}}])
 
 (def job->category
   {"戦士"     "戦士系"
@@ -166,5 +166,5 @@
          (when or?
            (str "（" (when oral "会話") (when both? "、") (when literal "読文") "）")))))
 
-(def magical-skills
+(def magical-abilities
   ["ソーサラー" "コンジャラー" "プリースト" "マギテック" "フェアリーテイマー" "デーモンルーラー" "ドルイド"])

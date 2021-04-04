@@ -29,24 +29,24 @@
 
 (defn- status-main [char idx]
   [:div#character-status-main
-   (let [{{:keys [age gender impurity]}                       :personality
+   (let [{{:keys [age gender]}                                     :personality
           {{:keys [first middle last]} :name
-           {:keys [name head origin]}  :species}              :personality
-          {:keys [level max-hp max-mp hp mp exp honor gamel]} :status
-          {:keys [weapons shield armor]}                      :equipment
-          {:keys [base initial growth total bonus]}           :parameters
-          {{:keys [scout ranger sage]} :packages}             :reference-values} char]
+           {:keys [name head origin]}  :species}                   :personality
+          {:keys [level max-hp max-mp hp mp exp honor g impurity]} :status
+          {:keys [weapons shield armor]}                           :equipment
+          {:keys [base initial growth total bonus]}                :parameters
+          {{:keys [scout ranger sage]} :packages}                  :reference-values} char]
      [:div.nes-container.is-dark.is-rounded.grid-container {:style {:width (vw 90) :height (vw 50)}}
       [:div.aux-left
        [:div.d-flex.flex-row.align-items-center.justify-content-center.w-100.h-100
         [:div.nes-container.is-dark.is-rounded.d-flex.flex-row.align-items-center.justify-content-center
-         {:style {:height (vw 7)}
+         {:style    {:height (vw 7)}
           :on-click #(move-page -1)}
          [:div "◁"]]]]
       [:div.aux-right
        [:div.d-flex.flex-row.align-items-center.justify-content-center.w-100.h-100
         [:div.nes-container.is-dark.is-rounded.d-flex.flex-row.align-items-center.justify-content-center
-         {:style {:height (vw 7)}
+         {:style    {:height (vw 7)}
           :on-click #(move-page 1)}
          [:div "▷"]]]]
       [:div.status {:style {:font-size (vw 1.5)}}
@@ -62,8 +62,8 @@
            [:tr [:td "Lv"] [:td level]]
            [:tr [:td "HP"] [:td (str hp "/" max-hp)]]
            [:tr [:td "MP"] [:td (str mp "/" max-mp)]]
-           [:tr [:td "EXP"] [:td exp]]
-           [:tr [:td "G"] [:td gamel]]]]]]]
+           [:tr [:td "EXP"] [:td (:free exp)]]
+           [:tr [:td "G"] [:td g]]]]]]]
       [:div.personality {:style {:font-size (vw 1.5)}}
        [:div.nes-container.is-dark.is-rounded.h-100
         [:table.nes-table.is-dark.w-100
@@ -189,31 +189,33 @@
       (into [:div.d-flex.flex-row {:style {:width (vw 72) :overflow "auto"}}]
             (for [key skills]
               (when (-> char :skills key)
-                (if (not= key :bird)
+                (case key
+                  :bird (when (or (-> char :skills :bird :songs)
+                                  (-> char :skills :bird :finales))
+                          [:div.nes-container.is-dark.is-rounded.text-nowrap
+                           [:div (skill-key->str key)]
+                           [:hr]
+                           [:div.d-flex.flex-row
+                            [:div {:style {:margin-right (vw 1)}}
+                             [:div "呪歌"]
+                             [:hr]
+                             [:div {:style {:height (vw 15) :overflow "auto"}}
+                              (for [item (-> char :skills :bird :songs)]
+                                [:div item])]]
+                            [:div
+                             [:div "終律"]
+                             [:hr]
+                             [:div {:style {:height (vw 15) :overflow "auto"}}
+                              (for [item (-> char :skills :bird :finales)]
+                                [:div item])]]]])
                   [:div.nes-container.is-dark.is-rounded.text-nowrap
                    [:div (skill-key->str key)]
                    [:hr]
-                   [:div {:style {:height (vw 17) :overflow "auto"}}
-                    (for [item (-> char :skills key)]
-                      [:div item])]]
-                  (when (or (-> char :skills :bird :songs)
-                            (-> char :skills :bird :finales))
-                    [:div.nes-container.is-dark.is-rounded.text-nowrap
-                     [:div (skill-key->str key)]
-                     [:hr]
-                     [:div.d-flex.flex-row
-                      [:div {:style {:margin-right (vw 1)}}
-                       [:div "呪歌"]
-                       [:hr]
-                       [:div {:style {:height (vw 15) :overflow "auto"}}
-                        (for [item (-> char :skills :bird :songs)]
-                          [:div item])]]
-                      [:div
-                       [:div "終律"]
-                       [:hr]
-                       [:div {:style {:height (vw 15) :overflow "auto"}}
-                        (for [item (-> char :skills :bird :finales)]
-                          [:div item])]]]])))))]]]])
+                   (into [:div {:style {:height (vw 17) :overflow "auto"}}]
+                         (for [item (if (= key :general)
+                                      (-> char :skills key :manual)
+                                      (-> char :skills key))]
+                           [:div item]))]))))]]]])
 
 (defn- container [char idx]
   (case @page-idx
