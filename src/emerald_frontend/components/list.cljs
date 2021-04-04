@@ -23,10 +23,10 @@
                      {:type            "radio"
                       :name            group-name
                       :default-checked (= i 0)
-                      :on-click        ((choices i):on-click)}]
+                      :on-click        ((choices i) :on-click)}]
                     [:span [(or choices-size default-size)
                             {:style {:display "inline-block"}}
-                            ((choices i):text)]]]]
+                            ((choices i) :text)]]]]
           (if (and direction (= direction :horizontal))
             body
             [:div body])))))])

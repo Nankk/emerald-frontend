@@ -93,8 +93,8 @@
                                         [:tr
                                          [:td (param-key->str p)]
                                          (when (= (rem i 2) 0)
-                                           [:td.center {:rowspan "2"
-                                                        :style   {:vertical-align "middle"}}
+                                           [:td.center {:row-span "2"
+                                                        :style    {:vertical-align "middle"}}
                                             (base (param->base p))])
                                          [:td.center (initial p)]
                                          [:td.center (growth p)]
@@ -142,6 +142,7 @@
    :artisan     "呪印"})
 
 (def skills
+  ;; For keeping the order
   [:general
    :sorcerer
    :conjurer
@@ -224,4 +225,6 @@
 
 (defn main [char idx]
   (reset! page-idx 0)
-  [container char idx])
+  (if char
+    [container char idx]
+    [:div]))

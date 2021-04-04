@@ -19,18 +19,18 @@
            :width "100%"
            :background-color (c/base 1)}]
 
-   [:h1 {:font-size (vw 4.0)
-         :margin "3vw"}]
-   [:h2 {:font-size (vw 3.0)
-         :margin "0.08rem"}]
-   [:h3 {:font-size (vw 2.5)
-         :margin "0.07rem"}]
-   [:h4 {:font-size (vw 2.0)
-         :margin "0.06rem"}]
-   [:h5 {:font-size (vw 1.5)
-         :margin "0.5vw"}]
-   [:h6 {:font-size (vw 1.0)
-         :margin "0.5vw"}]
+   [:h1 {:font-size (vw 4.0) :margin "3vw"}]
+   [:h2 {:font-size (vw 3.0) :margin "0.08rem"}]
+   [:h3 {:font-size (vw 2.5) :margin "0.07rem"}]
+   [:h4 {:font-size (vw 2.0) :margin "0.06rem"}]
+   [:h5 {:font-size (vw 1.5) :margin "0.5vw"}]
+   [:h6 {:font-size (vw 1.0) :margin "0.5vw"}]
+   [:.font-size-1 {:font-size (vw 4.0)}]
+   [:.font-size-2 {:font-size (vw 3.0)}]
+   [:.font-size-3 {:font-size (vw 2.5)}]
+   [:.font-size-4 {:font-size (vw 2.0)}]
+   [:.font-size-5 {:font-size (vw 1.5)}]
+   [:.font-size-6 {:font-size (vw 1.0)}]
    [:p  {:font-size (vw 2.0)}]
 
    ;; Aux
@@ -45,9 +45,13 @@
                     :overflow "hidden"
                     :position "absolute"
                     :z-index  "-1"}]
-   [:.profile-image {:style {:object-fit "contain"}
+   [:.profile-image {:object-fit "contain"
                      ;; :image-rendering "pixelated"
                      }]
+   [:.screen-image {:object-fit "contain"
+                    :background-color "#000000"
+                    :width "100%"
+                    :height "100%"}]
 
    ;; For nes components
    [:.nes-container.is-rounded {:margin "0px"

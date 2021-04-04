@@ -4,8 +4,7 @@
 (def server-url
   (if config/debug?
     "http://localhost:3000"
-    "https://nankk.net/sw-tools-api/v1"
-    ))
+    "https://nankk.net/sw-tools-api/v1"))
 
 (def upload-image-size-limit 200000)
 

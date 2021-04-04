@@ -67,6 +67,7 @@
      body]))
 
 (defn modal
+  "Make sure to set {:position \"relative\"} to the container of this dialog."
   ([key pos body] (modal key pos nil body))
   ([key pos options body]
    (let [{:keys [backdropper-rigid?]} options]

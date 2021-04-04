@@ -10,13 +10,16 @@
 (defan <get-data [url-from-root]
   (println "<get-data")
   (println (str const/server-url url-from-root))
-  (let [url (str const/server-url url-from-root)
-        data (<! (http/get url {:with-credentials? false
-                                :keywordize-keys false}))]
-    data
-    ;; (->> data
-    ;;      (transform-keys #(->kebab-case-keyword % :separator \_) ,,))
-    ))
+  (try
+    (let [url (str const/server-url url-from-root)
+          data (<! (http/get url {:with-credentials? false
+                                  :keywordize-keys false}))]
+      data
+      ;; (->> data
+      ;;      (transform-keys #(->kebab-case-keyword % :separator \_) ,,))
+      )
+    (catch js/Error e
+      e)))
 
 (defan <post-data [url-from-root data]
   (let [url (str const/server-url url-from-root)
