@@ -1,0 +1,54 @@
+* これは何
+ソード・ワールド2.5を遊ぶためのフロントエンド（開発中）
+
+* How to 開発
+** 依存関係のインストール
+環境に合った方法で以下をインストールしておいてください。
+
+- 最新版の ~Node~ と ~npm~
+- OpenJDK 8
+
+** ソースコードとモジュールの準備
+本リポジトリを任意の場所にクローンします。
+
+#+begin_src
+git clone git@gitlab.com:q-portal/sword-world-tools/emerald-frontend.git
+または
+git clone https://gitlab.com/q-portal/sword-world-tools/emerald-frontend.git
+#+end_src
+
+クローンしたディレクトリのルートで以下を実行し ~Node~ の依存関係をインストールします。
+これには開発言語である ~ClojureScript~ の開発環境 ~shadow-cljs~ も含まれます（ ~shadow-cljs~ 自体がnpmパッケージとなっています）。
+
+#+begin_src
+npm install
+#+end_src
+
+** ビルド
+以下のいずれかでビルドできます。
+
+#+begin_src
+npx shadow-cljs compile app #デバッグビルド
+npx shadow-cljs release app #リリースビルド
+#+end_src
+
+が、開発時には通常以下のコマンドを使用します。
+~watch~ はソースファイルへの変更を検知し、必要な箇所の再ビルド＆反映を自動的に行います。
+
+#+begin_src
+npx shadow-cljs watch app
+#+end_src
+
+あるいは各自で使用しているIDEのコマンドからREPLの開始&接続を行ってください。
+
+** 実行
+- ブラウザから ~localhost:8700~ にアクセスすると画面が表示されます
+  + サーバーが動作していない場合表示されません
+  + 開発時には ~localhost:3000~ で稼働しているサーバーへのアクセスを試みますが、 ~const.cljs~ の以下を書き換えることで接続先を変更できます。
+
+#+begin_src clojure
+(def server-url
+  (if config/debug?
+    "http://localhost:3000"
+    "https://nankk.net/sw-tools-api/v1"))
+#+end_src
