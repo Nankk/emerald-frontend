@@ -43,10 +43,10 @@
 
 (defn status-summary [char]
   (let [{{{:keys [first middle last]} :name}           :personality
-         {:keys [level max-hp hp max-mp mp gamel exp]} :status} char]
+         {:keys [level max-hp hp max-mp mp g exp]} :status} char]
     [:div.status-summary
      [:div.nes-container.is-dark.is-rounded.w-100.h-100
-      [:div.d-flex.flex-row.align-items-center.w-100.h-100
+      [:div.d-flex.flex-row.align-items-center.w-100.h-100.position-relative
        [:img.profile-image
         {:src   (str const/server-url "/characters/" @cur-char-idx "/image")
          :style {:width (vw 10) :height (vw 10)}}]
@@ -55,9 +55,8 @@
         [:table.nes-table.is-dark
          [:tbody
           [:tr [:td "Lv"] [:td level] [:td ""] [:td ""]]
-          [:tr [:td "HP"] [:td (str hp "/" max-hp)] [:td "G"] [:td gamel]]
-          [:tr [:td "MP"] [:td (str mp "/" max-mp)] [:td "Exp"] [:td exp]]]]
-        ]]]]))
+          [:tr [:td "HP"] [:td (str hp "/" max-hp)] [:td "G"] [:td g]]
+          [:tr [:td "MP"] [:td (str mp "/" max-mp)] [:td "Exp"] [:td (:free exp)]]]]]]]]))
 
 (defn notes [char]
   [:div.notes.font-size-4
