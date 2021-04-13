@@ -47,6 +47,11 @@
     [:div.status-summary
      [:div.nes-container.is-dark.is-rounded.w-100.h-100
       [:div.d-flex.flex-row.align-items-center.w-100.h-100.position-relative
+       (when true
+         [:button.nes-btn.is-primary.position-absolute
+          {:style {:top (vw -1) :left (vw -1)}
+           :on-click #()}
+          "⇧"])
        [:img.profile-image
         {:src   (str const/server-url "/characters/" @cur-char-idx "/image")
          :style {:width (vw 10) :height (vw 10)}}]
