@@ -66,6 +66,20 @@
     [:.main {:grid-area "main"}]
     [:.title {:grid-area "title"}]
     [:.aux-left {:grid-area "aux-left"}]]
+   [:#cc-nature-additional-exp
+    [:.grid-container {:display               "grid"
+                       :grid-template-columns "minmax(0, 0.5fr) minmax(0, 3fr) minmax(0, 0.5fr)"
+                       :grid-template-rows    "minmax(0, 0.3fr) minmax(0, 1.4fr) minmax(0, 0.3fr)"
+                       :gap                   "0.2rem 0.2rem"
+                       :grid-template-areas
+                       (pr-str "aux-left title ."
+                               ". main ."
+                               ". main aux-right")}]
+
+    [:.main {:grid-area "main"}]
+    [:.title {:grid-area "title"}]
+    [:.aux-left {:grid-area "aux-left"}]
+    [:.aux-right {:grid-area "aux-right"}]]
    [:#cc-nature-confirmation
     [:.grid-container {:display               "grid"
                        :grid-template-columns "minmax(0, 0.5fr) minmax(0, 3fr) minmax(0, 0.5fr)"
@@ -78,7 +92,7 @@
     [:.main {:grid-area "main"}]
     [:.title {:grid-area "title"}]]
    [:.inner-grid-container {:display               "grid"
-                            :grid-template-columns "minmax(0, 5fr) minmax(0, 3fr)"
+                            :grid-template-columns "minmax(0, 7fr) minmax(0, 3fr)"
                             :grid-template-rows    "minmax(0, 4fr) minmax(0, 5fr)"
                             :gap                   "0.2rem 0.2rem"
                             :grid-template-areas

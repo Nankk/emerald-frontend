@@ -62,7 +62,7 @@
            [:tr [:td "Lv"] [:td level]]
            [:tr [:td "HP"] [:td (str hp "/" max-hp)]]
            [:tr [:td "MP"] [:td (str mp "/" max-mp)]]
-           [:tr [:td "EXP"] [:td (:free exp)]]
+           [:tr [:td "EXP"] [:td (- (:total exp) (:used exp))]]
            [:tr [:td "G"] [:td g]]]]]]]
       [:div.personality {:style {:font-size (vw 1.5)}}
        [:div.nes-container.is-dark.is-rounded.h-100

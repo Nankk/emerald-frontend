@@ -30,25 +30,16 @@
    [:div.nes-container.is-dark.is-rounded.w-100.h-100.font-size-4
     (let [icon-size (vw 5)
           gap       (vw 1)
-          gap-icon  (vw 1.8)]
-      [:div.d-flex.flex-column
-       [:div.d-flex.flex-row.align-items-center {:style {:margin gap}
-                                                 :on-click #()}
-        [:img {:style {:margin-right gap-icon :width icon-size :height icon-size}}]
-        [:div"もちもの"]]
-       [:div.d-flex.flex-row.align-items-center {:style {:margin gap}
-                                                 :on-click #()}
-        [:img {:style {:margin-right gap-icon :width icon-size :height icon-size}}]
-        [:div"まほう"]]
-       [:div.d-flex.flex-row.align-items-center {:style {:margin gap}
-                                                 :on-click #()}
-        [:img {:style {:margin-right gap-icon :width icon-size :height icon-size}}]
-        [:div"そうび"]]
-       [:div.d-flex.flex-row.align-items-center {:style {:margin gap}
-                                                 :on-click #(panel/show-modal :player/show-status)}
-        [:img {:style {:margin-right gap-icon :width icon-size :height icon-size}}]
-        [:div"つよさ"]]
-       ])]])
+          gap-icon  (vw 1.8)
+          choices   [["もちもの" #()]
+                     ["まほう" #()]
+                     ["そうび" #()]
+                     ["つよさ" #(panel/show-modal :player/show-status)]]]
+      (into [:div.d-flex.flex-column]
+            (for [c choices]
+              [:div.d-flex.flex-row.align-items-center {:style {:margin gap} :on-click (c 1)}
+               [:img {:style {:margin-right gap-icon :width icon-size :height icon-size}}]
+               [:div (c 0)]])))]])
 
 (defn status-summary [char]
   (let [{{{:keys [first middle last]} :name}           :personality
