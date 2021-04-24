@@ -66,7 +66,7 @@
     [:.main {:grid-area "main"}]
     [:.title {:grid-area "title"}]
     [:.aux-left {:grid-area "aux-left"}]]
-   [:#cc-nature-additional-exp
+   [:#cc-nature-high-lv
     [:.grid-container {:display               "grid"
                        :grid-template-columns "minmax(0, 0.5fr) minmax(0, 3fr) minmax(0, 0.5fr)"
                        :grid-template-rows    "minmax(0, 0.3fr) minmax(0, 1.4fr) minmax(0, 0.3fr)"

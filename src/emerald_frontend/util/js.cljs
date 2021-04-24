@@ -3,5 +3,6 @@
 (defn by-id [id]
   (-> js/document (.getElementById id)))
 
-(defn log [x]
-  (.log js/console x))
+(defn log [& args]
+  (doseq [arg args]
+    (.log js/console arg)))

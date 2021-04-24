@@ -108,7 +108,7 @@
      [:div.nes-container.is-dark.is-rounded
       [list/choice
        :choices [{:text "自分でポイント振り分け" :on-click #(panel/show-modal :home-not-implemented)}
-                 {:text "人物像から決める" :on-click #(container/switch-panels :home :cc-nature-species :up)}
+                 {:text "人物像から決める" :on-click #(container/switch-panels :home :cc-nature/species :up)}
                  {:text "テンプレート" :on-click #(panel/show-modal :home-not-implemented)}]]]]]
    [panel/modal :home-start [(vw 5) (vw 30)] [summary-list :start]]
    [panel/modal :home-summary [(vw 5) (vw 30)] [summary-list :show]]
@@ -123,16 +123,16 @@
   [container/transient-container
    :home
    {:home                          [start]
-    :cc-nature-species             [nature/species-main]
-    :cc-nature-job                 [nature/job-main]
-    :cc-nature-born                [nature/born-main]
-    :cc-nature-infancy             [nature/infancy-main]
-    :cc-nature-happening-infancy   [nature/happening-main :infancy]
-    :cc-nature-childhood           [nature/childhood-main]
-    :cc-nature-happening-childhood [nature/happening-main :childhood]
-    :cc-nature-adolescence         [nature/adolescence-main]
-    :cc-nature-reason              [nature/reason-main]
-    :cc-nature-name                [nature/name-main]
-    :cc-nature-additional-exp      [nature/additional-exp-main]
-    :cc-nature-confirmation        [nature/confirmation-main]
+    :cc-nature/species             [nature/species-main]
+    :cc-nature/job                 [nature/job-main]
+    :cc-nature/born                [nature/born-main]
+    :cc-nature/infancy             [nature/infancy-main]
+    :cc-nature/happening-infancy   [nature/happening-main :infancy]
+    :cc-nature/childhood           [nature/childhood-main]
+    :cc-nature/happening-childhood [nature/happening-main :childhood]
+    :cc-nature/adolescence         [nature/adolescence-main]
+    :cc-nature/reason              [nature/reason-main]
+    :cc-nature/name                [nature/name-main]
+    :cc-nature/high-lv             [nature/high-lv-main]
+    :cc-nature/confirmation        [nature/confirmation-main]
     }])

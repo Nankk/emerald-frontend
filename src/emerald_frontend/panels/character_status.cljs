@@ -112,7 +112,7 @@
           [:tr [:td "セージ"] [:td "-"] [:td "-"] [:td "-"] [:td (sage :int)]]]]]]
       [:div.languages {:style {:font-size (vw 1.5)}}
        [:div.nes-container.is-dark.is-rounded.h-100
-        (into [:div.d-flex.flex-row {:style {:width (vw 50) :overflow "auto"}}]
+        (into [:div.d-flex.flex-row {:style {:width (vw 44) :overflow "auto"}}]
               (for [groups (let [rows 4] (partition rows rows (repeat {}) (char :languages)))]
                 [:table.nes-table.is-dark.text-nowrap {:style {:min-width (vw 20)}}
                  [:thead
