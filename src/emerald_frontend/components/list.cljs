@@ -13,7 +13,7 @@
   [:div
    (when header [:div header])
    (let [group-name   (str (random-uuid))
-         default-size :h3]
+         font-size 3]
      (into
       [:div]
       (for [i (range (count choices))]
@@ -24,9 +24,9 @@
                       :name            group-name
                       :default-checked (= i 0)
                       :on-click        ((choices i) :on-click)}]
-                    [:span [(or choices-size default-size)
-                            {:style {:display "inline-block"}}
-                            ((choices i) :text)]]]]
+                    [:span {:class (str "font-size-" (or choices-size font-size))
+                            :style {:display "inline-block"}}
+                     ((choices i) :text)]]]
           (if (and direction (= direction :horizontal))
             body
             [:div body])))))])

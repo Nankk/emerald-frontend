@@ -11,9 +11,8 @@
             [emerald-frontend.util.css :refer [vw]]
             [emerald-frontend.panels.character-status :as status]
             [re-frame.core :as rf]
-            [emerald-frontend.events :as events]))
-
-(defonce cur-char-idx (reagent/atom nil))
+            [emerald-frontend.events :as events]
+            [emerald-frontend.subs :as subs]))
 
 (defonce *characters-summary (reagent/atom nil))
 
@@ -32,15 +31,14 @@
            {fname :first mname :middle lname :last} :name}
           summary]
       [:div
-       [:h4 (str fname (when-not (empty? mname) (str " " mname)) (when-not (empty? lname) (str " " lname))
+       [:div.font-size-2 (str fname (when-not (empty? mname) (str " " mname)) (when-not (empty? lname) (str " " lname))
                  "（" age "）")]
-       [:h5 (str "[" (species :name) "]")]])]])
-
-(defonce *cur-character (reagent/atom nil))
+       [:div.font-size-1 (str "[" (species :name) "]")]])]])
 
 (defn- reload-cur-char []
   (println "reload-cur-char")
-  (go (reset! *cur-character (:body (<! (http/<get-data (str "/characters/" @cur-char-idx)))))))
+  (go (let [char (:body (<! (http/<get-data (str "/characters/" @(rf/subscribe [::subs/cur-char-idx])))))]
+        (rf/dispatch-sync [::events/set-cur-char char]))))
 
 (defn- summary-list
   "type :start/:show/:delete"
@@ -50,13 +48,11 @@
     (into [:div] (for [summary (sort-by :idx @*characters-summary)]
                    ^{:key (summary :uuid)}
                    [:div {:on-click (fn []
-                                      (reset! cur-char-idx (summary :idx))
+                                      (rf/dispatch-sync [::events/set-cur-char-idx (summary :idx)])
+                                      (reload-cur-char)
                                       (case type
-                                        :start  (do
-                                                  (rf/dispatch-sync [::events/set-cur-char-idx @cur-char-idx])
-                                                  (rf/dispatch-sync [::events/move-panel-to :session-player]))
-                                        :show   (do (reload-cur-char)
-                                                    (panel/show-modal :home-show-status))
+                                        :start  (rf/dispatch-sync [::events/move-panel-to :session-player])
+                                        :show   (panel/show-modal :home-show-status)
                                         :delete (panel/show-modal :home-delete-confirmation)))}
                     [character-summary summary]]))]])
 
@@ -65,21 +61,21 @@
 (defn- character-delete-confirmation []
   [:div.nes-container.is-dark.is-rounded
    (case @*delete-confirmation-depth
-     3 [:h3 "キャラクターを削除しています…"]
+     3 [:div.font-size-3 "キャラクターを削除しています…"]
      4 [:div
-        [:h3 "削除しました。"]
+        [:div.font-size-3 "削除しました。"]
         [:button.nes-btn.is-primary {:on-click #(do (reset! *delete-confirmation-depth 0)
                                                     (panel/close-modal :home-delete-confirmation))}
          "OK"]]
      [list/choice
       :header (case @*delete-confirmation-depth
-                0 [:h3 "キャラクターをけしますか？"]
-                1 [:h3 "ほんとうにけしますよ？"]
-                2 [:h3 {:style {:color "#ff0000"}} "こうかいしませんね？"])
+                0 [:div.font-size-3 "キャラクターをけしますか？"]
+                1 [:div.font-size-3 "ほんとうにけしますよ？"]
+                2 [:div.font-size-3 {:style {:color "#ff0000"}} "こうかいしませんね？"])
       :choices [{:text "はい" :on-click #(case @*delete-confirmation-depth
                                            2 (go
                                                (reset! *delete-confirmation-depth 3)
-                                               (<! (http/<delete (str "/characters/" @cur-char-idx)))
+                                               (<! (http/<delete (str "/characters/" @(rf/subscribe [::subs/cur-char-idx]))))
                                                (<! (<load-characters-summary))
                                                (reset! *delete-confirmation-depth 4))
                                            (swap! *delete-confirmation-depth inc))}
@@ -87,9 +83,10 @@
                                                (panel/close-modal :home-delete-confirmation))}]])])
 
 (defn character-show-status []
-  (let [char @*cur-character]
+  (let [char     @(rf/subscribe [::subs/cur-char])
+        char-idx @(rf/subscribe [::subs/cur-char-idx])]
     (if char
-      [status/main char @cur-char-idx]
+      [status/main char char-idx]
       [:div])))
 
 (defn start []
@@ -120,19 +117,20 @@
      [:div "まだ できてないよ！"]]]])
 
 (defn main []
-  [container/transient-container
-   :home
-   {:home                          [start]
-    :cc-nature/species             [nature/species-main]
-    :cc-nature/job                 [nature/job-main]
-    :cc-nature/born                [nature/born-main]
-    :cc-nature/infancy             [nature/infancy-main]
-    :cc-nature/happening-infancy   [nature/happening-main :infancy]
-    :cc-nature/childhood           [nature/childhood-main]
-    :cc-nature/happening-childhood [nature/happening-main :childhood]
-    :cc-nature/adolescence         [nature/adolescence-main]
-    :cc-nature/reason              [nature/reason-main]
-    :cc-nature/name                [nature/name-main]
-    :cc-nature/high-lv             [nature/high-lv-main]
-    :cc-nature/confirmation        [nature/confirmation-main]
-    }])
+  [:div.w-100.h-100
+   [container/transient-container
+    :home
+    {:home                          [start]
+     :cc-nature/species             [nature/species-main]
+     :cc-nature/job                 [nature/job-main]
+     :cc-nature/born                [nature/born-main]
+     :cc-nature/infancy             [nature/infancy-main]
+     :cc-nature/happening-infancy   [nature/happening-main :infancy]
+     :cc-nature/childhood           [nature/childhood-main]
+     :cc-nature/happening-childhood [nature/happening-main :childhood]
+     :cc-nature/adolescence         [nature/adolescence-main]
+     :cc-nature/reason              [nature/reason-main]
+     :cc-nature/name                [nature/name-main]
+     :cc-nature/high-lv             [nature/high-lv-main]
+     :cc-nature/confirmation        [nature/confirmation-main]
+     }]])

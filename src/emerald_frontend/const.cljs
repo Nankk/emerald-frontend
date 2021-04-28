@@ -167,3 +167,23 @@
 
 (def magical-abilities
   ["ソーサラー" "コンジャラー" "プリースト" "マギテック" "フェアリーテイマー" "デーモンルーラー" "ドルイド"])
+
+(def abilities
+  [{:name "ファイター" :category #{:warrior :cqc}}
+   {:name "グラップラー" :category #{:warrior :cqc}}
+   {:name "フェンサー" :category #{:warrior :cqc}}
+   {:name "シューター" :category #{:warrior}}
+   {:name "ソーサラー" :category #{:magician}}
+   {:name "コンジャラー" :category #{:magician}}
+   {:name "プリースト" :category #{:magician}}
+   {:name "フェアリーテイマー" :category #{:magician}}
+   {:name "マギテック" :category #{:magician}}
+   {:name "デーモンルーラー" :category #{:magician}}
+   {:name "ドルイド" :category #{:magician}}
+   {:name "スカウト" :category #{:other}}
+   {:name "レンジャー" :category #{:other}}
+   {:name "セージ" :category #{:other}}
+   {:name "エンハンサー" :category #{:other}}
+   {:name "バード" :category #{:other}}
+   {:name "ライダー" :category #{:other}}
+   {:name "アルケミスト" :category #{:other}}])

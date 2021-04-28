@@ -110,59 +110,59 @@
       [:div.biography.w-100.h-100.overflow-auto
        [:div.nes-container.is-dark.is-rounded
         [:div
-         [:h5 (str "生まれ：" babst)]
+         [:div.font-size-1 (str "生まれ：" babst)]
          [:hr]
-         [:h5 bdetail]
-         [:h5 "　"]
-         [:h5 (str "幼少期：" iabst)]
+         [:div.font-size-1 bdetail]
+         [:div.font-size-1 "　"]
+         [:div.font-size-1 (str "幼少期：" iabst)]
          [:hr]
-         [:h5 idetail]
-         [:h5 "　"]
-         [:h5 (str "幼少期のハプニング")]
+         [:div.font-size-1 idetail]
+         [:div.font-size-1 "　"]
+         [:div.font-size-1 (str "幼少期のハプニング")]
          [:hr]
-         [:h5 ihappen]
-         [:h5 "　"]
-         [:h5 (str "少年期：" cabst)]
+         [:div.font-size-1 ihappen]
+         [:div.font-size-1 "　"]
+         [:div.font-size-1 (str "少年期：" cabst)]
          [:hr]
-         [:h5 cdetail]
-         [:h5 "　"]
-         [:h5 (str "少年期のハプニング")]
+         [:div.font-size-1 cdetail]
+         [:div.font-size-1 "　"]
+         [:div.font-size-1 (str "少年期のハプニング")]
          [:hr]
-         [:h5 chappen]
-         [:h5 "　"]
-         [:h5 (str "青年期：" aabst)]
+         [:div.font-size-1 chappen]
+         [:div.font-size-1 "　"]
+         [:div.font-size-1 (str "青年期：" aabst)]
          [:hr]
-         [:h5 adetail]
-         [:h5 "　"]
-         [:h5 "冒険に出た理由"]
+         [:div.font-size-1 adetail]
+         [:div.font-size-1 "　"]
+         [:div.font-size-1 "冒険に出た理由"]
          [:hr]
-         [:h5 areason]]]]))
+         [:div.font-size-1 areason]]]]))
 
   (defn- confirmation-skills [character]
     [:div.skills.w-100.h-100
      [:div.nes-container.is-dark.is-rounded.w-100.h-100.d-flex.flex-row
       [:div {:style {:width        "33%"
                      :border-right (str (vw 0.4) " solid " (colors/base 10))}}
-       [:h5 "技能"]
+       [:div.font-size-1 "技能"]
        [:hr]
        (into [:div]
              (for [ability (character :abilities)]
                [:div.d-flex.flex-row.justify-content-between.w-100
-                [:h5 (ability :name)]
-                [:h5 (str "Lv " (ability :level))]]))]
+                [:div.font-size-1 (ability :name)]
+                [:div.font-size-1 (str "Lv " (ability :level))]]))]
       [:div {:style {:width        "33%"
                      :border-right (str (vw 0.4) " solid " (colors/base 10))}}
-       [:h5 "戦闘特技"]
+       [:div.font-size-1 "戦闘特技"]
        [:hr]
        (into [:div]
              (for [skill (get-in character [:skills :general :manual])]
-               [:h5 skill]))]
+               [:div.font-size-1 skill]))]
       [:div {:style {:width "33%"}}
-       [:h5 "言語"]
+       [:div.font-size-1 "言語"]
        [:hr]
        (into [:div]
              (for [language (character :languages)]
-               [:h5 (str (language :name) " [" (when (language :oral) "話") (when (language :literal) "読") "]")]))]]])
+               [:div.font-size-1 (str (language :name) " [" (when (language :oral) "話") (when (language :literal) "読") "]")]))]]])
 
   (defn- confirmation-params [character]
     [:div.params.w-100.h-100
@@ -177,36 +177,37 @@
        (let [{fname :first mname :middle lname :last} (get-in character [:personality :name])
              {species :name origin :origin}           (get-in character [:personality :species])]
          [:div
-          [:h5 (str fname
-                    (when-not (empty? mname) (str " " mname))
-                    (when-not (empty? lname) (str " " lname))
-                    " (" (get-in character [:personality :age]) ")")]
-          [:h5 (str "[ " species (when origin (str "（" origin "）")) " ]")]])
+          [:div.font-size-1 (str fname
+                                 (when-not (empty? mname) (str " " mname))
+                                 (when-not (empty? lname) (str " " lname))
+                                 " (" (get-in character [:personality :age]) ")")]
+          [:div.font-size-1 (str "[ " species (when origin (str "（" origin "）")) " ]")]])
        (let [{{{:keys [technique physique mind]}      :base
                {stg :str :keys [dex agi con int pow]} :initial} :parameters}
              character
-             lv                   (apply max (map :level (character :abilities)))
-             hp                   (+ (+ physique con) (* lv 3))
-             magic-lv-total       (reduce + (get (filter #(some #{(% :name)} const/magical-abilities)
-                                                         (character :abilities)) 1))
-             mp                   (+ (+ mind pow) (* magic-lv-total 3))
-             {:keys [total used]} (-> character :status :exp)]
+             lv                    (apply max (map :level (character :abilities)))
+             hp                    (+ (+ physique con) (* lv 3))
+             magical-ability-names (map :name (filter #(get-in % [:category :magician]) const/abilities))
+             magic-lv-total        (reduce + (get (filter #(some #{(% :name)} magical-ability-names)
+                                                          (character :abilities)) 1))
+             mp                    (+ (+ mind pow) (* magic-lv-total 3))
+             {:keys [total used]}  (-> character :status :exp)]
          [:div.d-flex.flex-row.justify-content-between.w-100
           [:div.mr-2
-           [:h5 (str "Lv " lv)]
-           [:h5 (str "HP " hp "/" hp)]
-           [:h5 (str "MP " mp "/" mp)]
-           [:h5 (str "Exp " (- total used) "/" total)]]
+           [:div.font-size-1 (str "Lv " lv)]
+           [:div.font-size-1 (str "HP " hp "/" hp)]
+           [:div.font-size-1 (str "MP " mp "/" mp)]
+           [:div.font-size-1 (str "Exp " (- total used) "/" total)]]
           [:div
-           [:h5 "　"]
-           [:h5 (str "筋力 " (+ stg physique))]
-           [:h5 (str "知力 " (+ int mind))]
-           [:h5 (str "器用 " (+ dex technique))]]
+           [:div.font-size-1 "　"]
+           [:div.font-size-1 (str "筋力 " (+ stg physique))]
+           [:div.font-size-1 (str "知力 " (+ int mind))]
+           [:div.font-size-1 (str "器用 " (+ dex technique))]]
           [:div
-           [:h5 "　"]
-           [:h5 (str "生命 " (+ con physique))]
-           [:h5 (str "精神 " (+ pow mind))]
-           [:h5 (str "敏捷 " (+ agi technique))]]])]]])
+           [:div.font-size-1 "　"]
+           [:div.font-size-1 (str "生命 " (+ con physique))]
+           [:div.font-size-1 (str "精神 " (+ pow mind))]
+           [:div.font-size-1 (str "敏捷 " (+ agi technique))]]])]]])
 
   (defan- register-character-to-server [character-formatted]
     (panel/show-modal :confirmation-register)
@@ -226,10 +227,10 @@
        [:div.grid-container.w-100.h-100
         ;; Header
         [:div.nes-container.is-dark.is-rounded.w-100.title.d-flex.flex-row.justify-content-center.align-items-center
-         [:h3 "このキャラクターを作成します"]
+         [:div.font-size-3 "このキャラクターを作成します"]
          [list/choice
           :direction :horizontal
-          :choices-size :h4
+          :choices-size 2
           :choices [{:text "オッケー" :on-click #(register-character-to-server character)}
                     {:text "待った" :on-click #(container/switch-panels :cc-nature/confirmation :cc-nature/high-lv :right)}]]]
         ;; Panel
@@ -240,10 +241,10 @@
           [confirmation-biography character]]]]
        [panel/modal :confirmation-register [(vw 20) (vw 35)] {:backdropper-rigid? true}
         [:div.nes-container.is-dark.is-rounded
-         [:h3 "キャラクターを登録しています…"]]]
+         [:div.font-size-3 "キャラクターを登録しています…"]]]
        [panel/modal :confirmation-complete [(vw 20) (vw 35)] {:backdropper-rigid? true}
         [:div.nes-container.is-dark.is-rounded
-         [:h3 "作成が完了しました！"]
+         [:div.font-size-3 "作成が完了しました！"]
          [:div.d-flex.flex-row.align-items-center.justify-content-center.w-100
           [:button.nes-btn.is-primary {:on-click #(do (panel/close-all-modals)
                                                       (reset! cur-char char-default)
@@ -251,8 +252,8 @@
            "OK"]]]]
        [panel/modal :confirmation-failure [(vw 20) (vw 35)]
         [:div.nes-container.is-dark.is-rounded
-         [:h3 "作成に失敗しました。"]
-         [:h5 @*errors]
+         [:div.font-size-3 "作成に失敗しました。"]
+         [:div.font-size-1 @*errors]
          [:button.nes-btn.is-primary {:on-click #(panel/close-modal :confirmation-failure)}
           "OK"]]]])))
 
@@ -268,7 +269,11 @@
       (reset! high-lv-data (res :body))
       true))
 
-  (def high-lv-state (atom {}))
+  (def high-lv-state (atom {:achievements   0
+                            :additional-exp 0
+                            :g              0
+                            :honor          0
+                            :abyss-shard    0}))
 
   (def items
     [[:achievements "成長回数"]
@@ -298,9 +303,11 @@
                      :additional-exp [[:additional-items :exp] num]
                      :g              [[:status :g] num]
                      :honor          [[:status :honor] num]
-                     :abyss-shard    [[:items] [{:uuid  "36254798-5944-4699-b6d3-e458cbec8487"
-                                                 :name  "アビスシャード"
-                                                 :count num}]])]
+                     :abyss-shard    [[:items] (if (pos? num)
+                                                 [{:uuid  "36254798-5944-4699-b6d3-e458cbec8487"
+                                                   :name  "アビスシャード"
+                                                   :count num}]
+                                                 [])])]
         (swap! cur-char #(assoc-in % ks v)))))
 
   (defn high-lv-content []
@@ -309,10 +316,10 @@
       ;; Header
       [:button.nes-btn.aux-left
        {:on-click #(container/switch-panels :cc-nature/high-lv :cc-nature/name :right)}
-       [:h3 "◁"]]
-      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "追加の成長情報を入力してください"]]
+       [:div.font-size-3 "◁"]]
+      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:div.font-size-3 "追加の成長情報を入力してください"]]
       ;; Panel
-      [:div.nes-container.is-dark.is-rounded.main.font-size-4
+      [:div.nes-container.is-dark.is-rounded.main.font-size-2
        [:div "※高レベルキャラクターを作成する場合のみ入力してください。"]
        [:div "　レベル1または2のキャラクターを作成する場合入力は不要です。"]
        [:hr {:style {:margin (str (vw 1) " 0")}}]
@@ -342,7 +349,7 @@
        {:on-click #(do
                      (reflect-state-to-char)
                      (container/switch-panels :cc-nature/high-lv :cc-nature/confirmation :left))}
-       [:h3 "決定"]]
+       [:div.font-size-3 "決定"]]
       ]])
 
   (defn high-lv-main []
@@ -466,8 +473,8 @@
     [:div#cc-nature-name.w-100.h-100.p-1
      [:div.grid-container.w-100.h-100
       ;; Header
-      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature/name :cc-nature/reason :right)} [:h3 "◁"]]
-      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "年齢・名前を決めてください"]]
+      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature/name :cc-nature/reason :right)} [:div.font-size-3 "◁"]]
+      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:div.font-size-3 "年齢・名前を決めてください"]]
       ;; Panel
       [:div.nes-container.is-dark.is-rounded.main
        [:div.d-flex.flex-row.align-items-center.w-100.h-100
@@ -476,7 +483,7 @@
      [panel/modal :name-confirm [(vw 40) (vw 60)]
       [:div.nes-container.is-dark.is-rounded {:style {:width (vw 30) :height (vw 10)}}
        [list/choice
-        :header [:h3 "これでいいですか？"]
+        :header [:div.font-size-3 "これでいいですか？"]
         :direction :horizontal
         :choices [{:text     "はい"
                    :on-click #(let [fname (-> js/document (.getElementById "cc-nature-name-first") .-value)
@@ -487,7 +494,7 @@
                   {:text "いいえ" :on-click #(panel/close-modal :name-confirm)}]]]]
      [panel/modal :name-error [(vw 20) (vw 30)]
       [:div.nes-container.is-dark.is-rounded {:style {:width (vw 40)}}
-       [:h3 "アップロード可能なプロフィール画像の最大サイズは200KBです。"]
+       [:div.font-size-3 "アップロード可能なプロフィール画像の最大サイズは200KBです。"]
        [:button.nes-btn.is-primary {:on-click #(panel/close-modal :name-error)}
         "OK"]]]]))
 
@@ -507,10 +514,10 @@
   (defn- reason-detail []
     (when-let [reason @*cur-reason]
       [:div.nes-container.is-dark.is-rounded {:style {:width (vw 90)}}
-       [:h3 reason]
+       [:div.font-size-3 reason]
        [:hr]
        [list/choice
-        :header [:h3 "これでいいですか？"]
+        :header [:div.font-size-3 "これでいいですか？"]
         :choices [{:text "はい"
                    :on-click
                    #(do
@@ -541,8 +548,8 @@
     [:div#cc-nature-reason.w-100.h-100.p-1 {:style {:position "relative"}}
      [:div.grid-container.w-100.h-100
       ;; Header
-      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature/reason :cc-nature/adolescence :right)} [:h3 "◁"]]
-      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "冒険に出た理由を決定してください。"]]
+      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature/reason :cc-nature/adolescence :right)} [:div.font-size-3 "◁"]]
+      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:div.font-size-3 "冒険に出た理由を決定してください。"]]
       ;; Body
       [:div.nes-container.is-dark.is-rounded.w-100.h-100.selector
        [list/choice
@@ -585,7 +592,7 @@
         (do
           (reset! *sub-item ((first (happening key)) :name))
           [list/choice
-           :header [:h3 (str (name key) "：")]
+           :header [:div.font-size-3 (str (name key) "：")]
            :direction :horizontal
            :choices (into [] (if (= key :複数) ; TODO why can't eval sexp in the string fuckfuckfuck
                                (for [ms multiple-sweethearts]
@@ -615,13 +622,13 @@
       (let [move-from (keyword (str "cc-nature/happening-" (name period)))
             move-to   (if (= period :infancy) :cc-nature/childhood :cc-nature/adolescence)]
         [:div.nes-container.is-dark.is-rounded {:style {:width (vw 70)}}
-         [:h3 (happening :abstract)]
-         [:h4 (happening :detail)]
+         [:div.font-size-3 (happening :abstract)]
+         [:div.font-size-2 (happening :detail)]
          (reset! *sub-item nil)
          [happening-additional happening]
          [:hr]
          [list/choice
-          :header [:h3 "これでいいですか？"]
+          :header [:div.font-size-3 "これでいいですか？"]
           :choices [{:text     "はい"
                      :on-click #(do
                                   (swap! cur-char (fn [c] (assoc-in c
@@ -709,9 +716,9 @@
       [:button.nes-btn.aux-left {:on-click #(container/switch-panels
                                              (keyword (str "cc-nature/happening-" (name period)))
                                              (keyword (str "cc-nature/" (name period)))
-                                             :right)} [:h3 "◁"]]
+                                             :right)} [:div.font-size-3 "◁"]]
       [:div.nes-container.is-dark.is-rounded.w-100.text-center.title
-       [:h3 (str (if (= period :infancy) "幼少期" "少年期") "に起きたハプニングを決定してください")]]
+       [:div.font-size-3 (str (if (= period :infancy) "幼少期" "少年期") "に起きたハプニングを決定してください")]]
       ;; Body
       [:div.nes-container.is-dark.is-rounded.w-100.h-100.selector
        [list/choice
@@ -744,9 +751,9 @@
     [:div
      [:hr]
      [list/choice
-      :header [:h4 "習熟対象："]
+      :header [:div.font-size-2 "習熟対象："]
       :direction :horizontal
-      :choices-size :h4
+      :choices-size 2
       :choices (into [] (for [c candidates]
                           {:text     (c :name)
                            :on-click #(reset! *proficiency (c :name))}))]])
@@ -760,13 +767,13 @@
   (defn- adolescence-detail []
     (when-let [adolescence @*cur-adolescence]
       [:div.nes-container.is-dark.is-rounded {:style {:width (vw 90)}}
-       [:h3 (adolescence :abstract)]
-       [:h4 (str "習得戦闘特技：" (or (adolescence :skill) "-"))]
+       [:div.font-size-3 (adolescence :abstract)]
+       [:div.font-size-2 (str "習得戦闘特技：" (or (adolescence :skill) "-"))]
        [adolescence-sub adolescence]
-       [:h4 (adolescence :detail)]
+       [:div.font-size-2 (adolescence :detail)]
        [:hr]
        [list/choice
-        :header [:h3 "これでいいですか？"]
+        :header [:div.font-size-3 "これでいいですか？"]
         :choices [{:text "はい"
                    :on-click
                    #(do
@@ -814,8 +821,8 @@
     [:div#cc-nature-adolescence.w-100.h-100.p-1 {:style {:position "relative"}}
      [:div.grid-container.w-100.h-100
       ;; Header
-      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature/adolescence :cc-nature/happening-childhood :right)} [:h3 "◁"]]
-      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "青年期の経験を決定してください"]]
+      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature/adolescence :cc-nature/happening-childhood :right)} [:div.font-size-3 "◁"]]
+      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:div.font-size-3 "青年期の経験を決定してください"]]
       ;; Body
       [:div.nes-container.is-dark.is-rounded.w-100.h-100.selector
        [list/choice
@@ -845,27 +852,27 @@
     [:div
      [:hr]
      [list/choice
-      :header [:h3 "言語："]
+      :header [:div.font-size-3 "言語："]
       :direction :horizontal
-      :choices-size :h4
+      :choices-size 2
       :choices (into [] (for [language languages]
                           {:text     (const/language->str language)
                            :on-click #(reset! *language language)}))]
-     [:h4 (@*language :description)]])
+     [:div.font-size-2 (@*language :description)]])
 
   (defn- childhood-detail []
     (when-let [childhood @*cur-childhood]
       [:div.nes-container.is-dark.is-rounded {:style {:width (vw 90)}}
-       [:h3 (childhood :abstract)]
-       [:h4 (str "習得技能：" (or (childhood :ability) "-"))]
-       [:h4 (childhood :detail)]
+       [:div.font-size-3 (childhood :abstract)]
+       [:div.font-size-2 (str "習得技能：" (or (childhood :ability) "-"))]
+       [:div.font-size-2 (childhood :detail)]
        (reset! *language nil)
        (when-let [languages (childhood :言語)]
          (reset! *language (first (childhood :言語)))
          [language languages])
        [:hr]
        [list/choice
-        :header [:h3 "これでいいですか？"]
+        :header [:div.font-size-3 "これでいいですか？"]
         :choices [{:text "はい"
                    :on-click
                    #(do
@@ -912,8 +919,8 @@
     [:div#cc-nature-childhood.w-100.h-100.p-1 {:style {:position "relative"}}
      [:div.grid-container.w-100.h-100
       ;; Header
-      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature/childhood :cc-nature/happening-infancy :right)} [:h3 "◁"]]
-      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "少年期の経験を決定してください"]]
+      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature/childhood :cc-nature/happening-infancy :right)} [:div.font-size-3 "◁"]]
+      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:div.font-size-3 "少年期の経験を決定してください"]]
       ;; Body
       [:div.nes-container.is-dark.is-rounded.w-100.h-100.selector
        [list/choice
@@ -954,14 +961,14 @@
   (defn- infancy-detail []
     (when-let [infancy @*cur-infancy]
       [:div.nes-container.is-dark.is-rounded {:style {:width (vw 70)}}
-       [:h3 (str (infancy :abstract) "（" (infancy :type) "）")]
-       [:h4 (infancy :detail)]
+       [:div.font-size-3 (str (infancy :abstract) "（" (infancy :type) "）")]
+       [:div.font-size-2 (infancy :detail)]
        [:hr]
-       [:h3 "能力値"]
-       [:h3 (str "器" (infancy :A) " 敏" (infancy :B) " 筋" (infancy :C) " 生" (infancy :D) " 知" (infancy :E) " 精" (infancy :F))]
+       [:div.font-size-3 "能力値"]
+       [:div.font-size-3 (str "器" (infancy :A) " 敏" (infancy :B) " 筋" (infancy :C) " 生" (infancy :D) " 知" (infancy :E) " 精" (infancy :F))]
        [:hr]
        [list/choice
-        :header [:h3 "これでいいですか？"]
+        :header [:div.font-size-3 "これでいいですか？"]
         :choices [{:text "はい" :on-click #(do
                                              (set-infancy-to-cur-character infancy)
                                              (container/switch-panels :cc-nature/infancy :cc-nature/happening-infancy :left))}
@@ -1008,8 +1015,8 @@
     [:div#cc-nature-infancy.w-100.h-100.p-1 {:style {:position "relative"}}
      [:div.grid-container.w-100.h-100
       ;; Header
-      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature/infancy :cc-nature/born :right)} [:h3 "◁"]]
-      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "幼少期の経験を決定してください"]]
+      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature/infancy :cc-nature/born :right)} [:div.font-size-3 "◁"]]
+      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:div.font-size-3 "幼少期の経験を決定してください"]]
       ;; Body
       [:div.nes-container.is-dark.is-rounded.w-100.h-100.selector
        [list/choice
@@ -1046,13 +1053,13 @@
     [:div
      [:hr]
      [list/choice
-      :header [:h4 "貴族が冒険に出た理由"]
+      :header [:div.font-size-2 "貴族が冒険に出た理由"]
       :direction :horizontal
-      :choices-size :h4
+      :choices-size 2
       :choices (into [] (for [freedom reasons]
                           {:text     (freedom :abstract)
                            :on-click #(reset! *human-noble freedom)}))]
-     [:h4 ((first (filter #(= (% :abstract) (@*human-noble :abstract)) reasons)) :detail)]])
+     [:div.font-size-2 ((first (filter #(= (% :abstract) (@*human-noble :abstract)) reasons)) :detail)]])
 
   (defn- human-opts [born]
     (when (and (= (get-in @cur-char [:personality :species :name]) "人間")
@@ -1066,9 +1073,9 @@
     [:div
      [:hr]
      [list/choice
-      :header [:h4 "出自"]
+      :header [:div.font-size-2 "出自"]
       :direction :horizontal
-      :choices-size :h4
+      :choices-size 2
       :choices (into [] (for [origin origins]
                           {:text     origin
                            :on-click #(reset! *nightmare-origin origin)}))]])
@@ -1076,13 +1083,13 @@
   (defn- nightmare-freedom [freedoms]
     [:div
      [list/choice
-      :header [:h4 "自由になれた理由"]
+      :header [:div.font-size-2 "自由になれた理由"]
       :direction :horizontal
-      :choices-size :h4
+      :choices-size 2
       :choices (into [] (for [freedom freedoms]
                           {:text     (freedom :abstract)
                            :on-click #(reset! *nightmare-freedom freedom)}))]
-     [:h4 ((first (filter #(= (% :abstract) (@*nightmare-freedom :abstract)) freedoms)) :detail)]])
+     [:div.font-size-2 ((first (filter #(= (% :abstract) (@*nightmare-freedom :abstract)) freedoms)) :detail)]])
 
   (defn- nightmare-opts [born]
     (when (= (get-in @cur-char [:personality :species :name]) "ナイトメア")
@@ -1100,9 +1107,9 @@
       [:div
        [:hr]
        [list/choice
-        :header [:h3 "頭部の形状"]
+        :header [:div.font-size-3 "頭部の形状"]
         :direction :horizontal
-        :choices-size :h4
+        :choices-size 2
         :choices (into [] (for [shape (map :name (born :頭部))]
                             {:text     shape
                              :on-click #(reset! *lycant-head shape)}))]]))
@@ -1122,8 +1129,8 @@
   (defn- born-detail []
     (when-let [born @*cur-born]
       [:div.nes-container.is-dark.is-rounded {:style {:width (vw 90)}}
-       [:h3 (born :abstract)]
-       [:h4 (born :detail)]
+       [:div.font-size-3 (born :abstract)]
+       [:div.font-size-2 (born :detail)]
        (reset! *nightmare-origin nil)
        (reset! *nightmare-freedom nil)
        (reset! *lycant-head nil)
@@ -1132,13 +1139,15 @@
        [lycant-opts born]
        [:hr]
        [list/choice
-        :header [:h3 "これでいいですか？"]
+        :header [:div.font-size-3 "これでいいですか？"]
         :choices [{:text "はい"
                    :on-click
                    #(do
                       (swap! cur-char (fn [c] (assoc-in c [:options :nature :born] (born-result born))))
-                      (swap! cur-char (fn [c] (assoc-in c [:personality :species :origin] @*nightmare-origin)))
-                      (swap! cur-char (fn [c] (assoc-in c [:personality :species :head] @*lycant-head)))
+                      (when @*nightmare-origin
+                        (swap! cur-char (fn [c] (assoc-in c [:personality :species :origin] @*nightmare-origin))))
+                      (when @*lycant-head
+                        (swap! cur-char (fn [c] (assoc-in c [:personality :species :head] @*lycant-head))))
                       (container/switch-panels :cc-nature/born :cc-nature/infancy :left))}
                   {:text     "いいえ"
                    :on-click #(panel/close-modal :born-detail)}]
@@ -1166,8 +1175,8 @@
     [:div#cc-nature-born.w-100.h-100.p-1 {:style {:position "relative"}}
      [:div.grid-container.w-100.h-100
       ;; Header
-      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature/born :cc-nature/job :right)} [:h3 "◁"]]
-      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "生まれを決定してください"]]
+      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature/born :cc-nature/job :right)} [:div.font-size-3 "◁"]]
+      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:div.font-size-3 "生まれを決定してください"]]
       ;; Body
       [:div.nes-container.is-dark.is-rounded.w-100.h-100.selector
        [list/choice
@@ -1205,13 +1214,13 @@
                                                                         [:personality :job]
                                                                         (job :name))))
                                       (reset! *cur-job job)))}
-       [:h3 (job :name)]]))
+       [:div.font-size-3 (job :name)]]))
 
   (defn- magical-fighter-opts []
     [:div.nes-container.is-dark.is-rounded
      [list/choice
-      :header [:h3 "魔法系技能を選択してください"]
-      :choices-size :h4
+      :header [:div.font-size-3 "魔法系技能を選択してください"]
+      :choices-size 2
       :choices (vec (for [magical-ability ["ソーサラー" "コンジャラー" "プリースト"]]
                       {:text     magical-ability
                        :on-click #(do (reset! *cur-magical-ability magical-ability)
@@ -1227,8 +1236,8 @@
       [:button.nes-btn.aux-left {:on-click #(do
                                               (swap! cur-char (fn [c] (assoc-in c [:personality :job] "")))
                                               (container/switch-panels :cc-nature/job :cc-nature/species :right))}
-       [:h3 "◁"]]
-      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "職業を選んでください"]]
+       [:div.font-size-3 "◁"]]
+      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:div.font-size-3 "職業を選んでください"]]
       ;; Icons
       (into [:div.d-flex.flex-row.flex-wrap.align-items-center.justify-content-center.w-100.h-100.icons]
             (for [job const/jobs] ^{:key (job :name)} [job-icon job]))
@@ -1240,8 +1249,8 @@
                 (get-in @cur-char [:personality :species :name])
                 (job :name))]
            [:div
-            [:h3 (str (job :name) "（技：" technique " 体：" physique " 心：" mind "）")]
-            [:h4 (:description job)]]))]
+            [:div.font-size-3 (str (job :name) "（技：" technique " 体：" physique " 心：" mind "）")]
+            [:div.font-size-2 (:description job)]]))]
       ;; Button
       (let [disabled? (str/blank? (get-in @cur-char [:personality :job]))]
         [:div.nes-btn.is-primary.aux-right
@@ -1258,7 +1267,7 @@
                (do (swap! cur-char (fn [c] (assoc-in c [:abilities] (@*cur-job :abilities))))
                    (container/switch-panels :cc-nature/job :cc-nature/born :left))
                (panel/show-modal :job-magical-fighter-opts)))}
-         [:h3 "決定"]])
+         [:div.font-size-3 "決定"]])
       [panel/modal :job-magical-fighter-opts [(vw 20) (vw 20)]
        [magical-fighter-opts]]]]))
 
@@ -1286,19 +1295,19 @@
                      ;; At this point nightmare's language is empty because origin is not determined yet
                      (swap! cur-char (fn [c] (assoc-in c [:languages] (species :languages))))
                      (container/switch-panels :cc-nature/species :cc-nature/job :left))}
-     [:div.h-25 [:h4 (species :name)]]
+     [:div.h-25 [:div.font-size-2 (species :name)]]
      [:hr]
-     [:div.h-25 [:h4 (species :feature)]]
+     [:div.h-25 [:div.font-size-2 (species :feature)]]
      [:hr]
-     [:div.h-25 [:h4 (species :description)]]])
+     [:div.h-25 [:div.font-size-2 (species :description)]]])
 
   (defn species-main []
     [:div#cc-nature-species.w-100.h-100.p-1
      [:div.grid-container.w-100.h-100
       ;; Header
-      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature/species :home :down)} [:h3 "△"]]
-      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:h3 "種族を選んでください"]]
-      [:button.nes-btn.aux-right
+      [:button.nes-btn.aux-left {:on-click #(container/switch-panels :cc-nature/species :home :down)} [:div.font-size-3 "△"]]
+      [:div.nes-container.is-dark.is-rounded.w-100.text-center.title [:div.font-size-3 "種族を選んでください"]]
+      [:button.nes-btn.aux-right.animation-bounce-f
        {:style    {:color            "#ffffff"
                    :background-color (case (get-in @cur-char [:personality :gender])
                                        "male"   "#1133ee"
@@ -1309,17 +1318,17 @@
                                 "female"      "lgbttiqq2sa"
                                 "male")]
                      (swap! cur-char (fn [c] (assoc-in c [:personality :gender] next))))}
-       [:h3 (case (get-in @cur-char [:personality :gender])
-              "male"   "♂"
-              "female" "♀"
-              "⚥")]]
+       [:div.font-size-3 (case (get-in @cur-char [:personality :gender])
+                           "male"   "♂"
+                           "female" "♀"
+                           "⚥")]]
       ;; Arrows
       [:div.d-flex.flex-row.align-items-center.justify-content-center.w-100.h-100.button-left
        [:button.nes-container.is-dark.is-rounded.text-center
-        {:on-click (fn [] (swap! *head-idx #(shift-head-idx % (- cols-count))))} [:h3 "◀"]]]
+        {:on-click (fn [] (swap! *head-idx #(shift-head-idx % (- cols-count))))} [:div.font-size-3 "◀"]]]
       [:div.d-flex.flex-row.align-items-center.justify-content-center.w-100.h-100.button-right
        [:button.nes-container.is-dark.is-rounded.text-center
-        {:on-click (fn [] (swap! *head-idx #(shift-head-idx % cols-count)))} [:h3 "▶"]]]
+        {:on-click (fn [] (swap! *head-idx #(shift-head-idx % cols-count)))} [:div.font-size-3 "▶"]]]
       ;; Panels
       (map-indexed #(species-panel %1 %2) (take cols-count (subvec const/species-list @*head-idx)))
       ]])

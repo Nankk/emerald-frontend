@@ -8,7 +8,10 @@
   {::initialize-db    (fn [_ [_ _]] db/default-db)
    ::set-panel-width  [:panel-width]
    ::set-panel-height [:panel-height]
+   ::set-loading?     [:loading?]
    ::move-panel-to    [:cur-panel]
+   ::set-cur-char     [:cur-char]
+   ::clear-cur-char   (fn [db [_]] (assoc db :cur-char nil))
    ::set-cur-char-idx [:cur-char-idx]
    })
 
