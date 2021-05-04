@@ -5,6 +5,22 @@
    [emerald-frontend.style.colors :as c]
    [emerald-frontend.util.css :refer [vw]]))
 
+(defn font-sizes
+  "Returns non-linearly increasing font size set.
+
+  | n         | Curvature (1 = linear)             |
+  | min       | Minimum font size (relative to vw) |
+  | max       | Maximum font size (relative to vw) |
+  | max-steps | Total numbers of font sizes        |
+  "
+  [n min max max-steps]
+  (let [steps (range 1 (inc max-steps))]
+    (for [i steps]
+      [i
+       (+ min
+          (* (Math/pow (/ (- i (first steps)) (- (last steps) (first steps))) n)
+             (- max min)))])))
+
 (defn css []
   (g/css
    [:html {:height    "100%"
@@ -21,22 +37,30 @@
            :background-color (c/base 1)}]
 
    ;;  h1-h5 & font-sizes
-   (for [[lv relwidth] {5 4.0, 4 3.0, 3 2.5, 2 2.0, 1 1.0}]
+   (for [[lv relwidth] (font-sizes 1.3 1 5 10)]
      [(keyword (str ".font-size-" lv)) {:font-size (vw relwidth)}])
    [:p  {:font-size (vw 2.0)}]
 
-   ;; Margins override
-   (for [[acro postfixes] [["t" ["-top"]
-                            "l" ["-left"]
-                            "r" ["-right"]
-                            "b" ["-bottom"]
-                            "" [""]
-                            "x" ["-left" "-right"]
-                            "y" ["-top" "-bottom"]]]
-         [lv relwidth] {5 4.0, 4 3.0, 3 2.5, 2 2.0, 1 1.0, 0 0}]
-     [(keyword (str "m" acro "-" lv))
+   ;; Margins & paddings override
+   (for [m-or-p           ["m" "p"]
+         [acro postfixes] [["t" ["-top"]]
+                           ["l" ["-left"]]
+                           ["r" ["-right"]]
+                           ["b" ["-bottom"]]
+                           ["" [""]]
+                           ["x" ["-left" "-right"]]
+                           ["y" ["-top" "-bottom"]]]
+         [lv relwidth]    (font-sizes 1.3 0.1 5 10)]
+     [(keyword (str "." m-or-p acro "-" lv))
       (for [postfix postfixes]
-        {(keyword (str "margin" postfix)) (vw relwidth)})])
+        {(keyword (str (if (= m-or-p "m")
+                         "margin"
+                         "padding") postfix)) (str (vw relwidth) " !important")})])
+
+   ;; Width & height override
+   (for [i (range 5 101 5)]
+     [[(keyword (str ".w-" i)) {:width (vw i)}]
+      [(keyword (str ".h-" i)) {:height (vw i)}]])
 
    ;; Aux
    [:hr {:width            "100%"
