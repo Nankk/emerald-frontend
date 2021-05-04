@@ -65,18 +65,49 @@
    [:label {:margin "0px"}]
    [:input :.nes-input :.is-dark {:padding "0vw 1vw"}]
 
-   ;; Animations
+   ;;; Animations
+   ;; Bounce
    (vec (for [[name amplitude] [["bounce" 0.7]
                                 ["bounce-f" 1.5]
                                 ["bounce-ff" 3]
                                 ["bounce-p" 0.4]
                                 ["bounce-pp" 0.2]]]
-          [[(keyword (str ".animation-" name)) {:animation (str name " 1s infinite")}]
+          [[(keyword (str "." name)) {:animation (str name " 1s infinite")}]
            (at-keyframes
             name
-            [:0% {:transform                 (str "translateY(" (vw (- (/ amplitude 2))) ")")
-                  :animation-timing-function "ease-in"}]
-            [:50% {:transform                 (str "translateY(" (vw (/ amplitude 2)) ")")
-                   :animation-timing-function "ease-out"}]
+            [:0% {:transform       (str "translateY(" (vw (- (/ amplitude 2))) ")")
+                  :timing-function "ease-in"}]
+            [:50% {:transform       (str "translateY(" (vw (/ amplitude 2)) ")")
+                   :timing-function "ease-out"}]
             [:100% {:transform (str "translateY(" (vw (- (/ amplitude 2))) ")")}])]))
+   ;; Transition
+   (for [[dir from to]  [["up" 56 0]
+                         ["down" -56 0]
+                         ["right" -100 0]
+                         ["left" 100 0]]
+         type ["in" "out"]
+         :let [name (str dir "-" type)
+               xy   (if (or (= dir "up") (= dir "down")) "Y" "X")]]
+     [[(keyword (str "." name)) {:visibility (if (= type "out") "hidden" "visible")
+                                 :animation (str name " 0.5s linear 0s")}]
+      (at-keyframes
+       name
+       [:0% {:visibility "visible"
+             :transform
+             (str "translate" xy "(" (if (= type "in") from to) "vw)")}]
+       [:100% {:transform
+               (str "translate" xy "(" (if (= type "in") to (- from)) "vw)")}])])
+   ;; Fade in & out
+   (for [[speed time] [["-fast" 0.5] ["" 1.0] ["-slow" 1.5]]]
+     [[(keyword (str ".fade-in" speed)) {:animation (str "fade-in " time "s linear")}]
+      [(keyword (str ".fade-out" speed)) {:opacity 0
+                                          :transform (str "translateY(" (vw 56) ")")
+                                          :animation (str "fade-out " time "s linear")}]])
+   (at-keyframes "fade-in"
+                 [:0% {:opacity 0}]
+                 [:100% {:opacity 100}])
+   (at-keyframes "fade-out"
+                 ;; What a miserable, horrifying and NASTY implementation
+                 [:0% {:opacity 100 :transform "translateY(0px)"}]
+                 [:100% {:opacity 0 :transform "translateY(0px)"}])
    ))
