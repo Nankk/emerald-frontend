@@ -7,7 +7,7 @@
   ;; Example
   #_{:panel-key {:container container-uuid
                  :display "block | none"
-                 :transient-class "slide-up"}})
+                 :class "slide-up"}})
 
 (defn switch-panels
   "Switch panels from 'from-key' to 'to-key'.
@@ -19,32 +19,26 @@
             (get-in @panel-states! [to-key :container]))]}
   (println from-key to-key transition)
   ;; Transition
-  (swap! panel-states! assoc-in [from-key :transient-class] (str (name transition) "-out"))
-  (swap! panel-states! assoc-in [to-key :transient-class] (str (name transition) "-in"))
-  ;; Display
-  (swap! panel-states! assoc-in [from-key :display] "none")
-  (swap! panel-states! assoc-in [to-key :display] "block")
-
-  (println @panel-states!))
+  (swap! panel-states! assoc-in [from-key :class] (str (name transition) "-out"))
+  (swap! panel-states! assoc-in [to-key :class] (str (name transition) "-in")))
 
 (defn- add-panel-states [init-key panels container-id]
-  (let [panel-states (into {} (for [panel-key (keys panels)]
-                                [panel-key {:container container-id
-                                            :display "none"
-                                            :transient-class :slide-up}]))]
-    (swap! panel-states! merge (assoc-in panel-states [init-key :display] "block"))))
+  (let [panel-states (into {} (for [key (keys panels)]
+                                [key {:container container-id
+                                      :class     (if (= key init-key)
+                                                   "slide-up"
+                                                   "d-none")}]))]
+    (reset! panel-states! panel-states)))
 
-(defn- transient-panel [panel-kv]
-  (let [state (@panel-states! (panel-kv 0))]
+(defn- transient-panel [[key component]]
+  (let [state (@panel-states! key)]
     (when state
       ;; Each panel-kv
-      (println "state:" state)
-      [:div.w-100.h-100 {:class (state :transient-class)
-                         :style {:display (state :display)
-                                 :position "absolute"
+      [:div.w-100.h-100 {:class (state :class)
+                         :style {:position "absolute"
                                  :top "0px"
                                  :left "0px"}}
-       (panel-kv 1)])))
+       component])))
 
 (defn transient-container
   "Container to manage multiple panels and their transition.
