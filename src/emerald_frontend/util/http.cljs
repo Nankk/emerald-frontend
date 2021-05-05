@@ -28,6 +28,13 @@
                                 :keywordize-keys false}))]
     res))
 
+(defan <put-data [url-from-root data]
+  (let [url (str const/server-url url-from-root)
+        res (<! (http/put url {:json-params data
+                               :with-credentials? false
+                               :keywordize-keys false}))]
+    res))
+
 (defan <delete [url-from-root & data]
   (let [url (str const/server-url url-from-root)
         res (<! (http/delete url {:json-params data

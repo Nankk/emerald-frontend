@@ -6,6 +6,7 @@
 (def subscriptions
   {::panel-width     [:panel-width]
    ::panel-height    [:panel-height]
+   ::font-family     [:font-family]
    ::loading?        [:loading?]
    ::loading-message [:loading-message]
    ::chars           [:chars]

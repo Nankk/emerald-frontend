@@ -3,9 +3,10 @@
    [garden.core :as g]
    [garden.stylesheet :refer [at-keyframes]]
    [emerald-frontend.style.colors :as c]
-   [emerald-frontend.util.css :refer [vw]]))
+   [emerald-frontend.util.css :refer [vw]]
+   [clojure.string :as str]))
 
-(defn font-sizes
+(defn nonlinear-sizes
   "Returns non-linearly increasing font size set.
 
   | n         | Curvature (1 = linear)             |
@@ -21,49 +22,94 @@
           (* (Math/pow (/ (- i (first steps)) (- (last steps) (first steps))) n)
              (- max min)))])))
 
-(defn css []
-  (g/css
-   [:html {:height    "100%"
+(defn outermost []
+  [[:html {:height    "100%"
            :width     "100%"
            :font-size (vw 4.5)
            }]
    [:body {:height           "100%"
            :width            "100%"
-           :font-family      "PixelMplus10"
            :background-color (c/base 1)
            :color            (c/base 7)}]
    [:#app {:height           "100%"
            :width            "100%"
-           :background-color (c/base 1)}]
+           :background-color (c/base 1)}]])
 
-   ;;  h1-h5 & font-sizes
-   (for [[lv relwidth] (font-sizes 1.3 1 5 10)]
+(def nes-container-dark
+  {:border-style "solid"
+   :border-width (vw 0.3)
+   :border-color "white"
+   :margin  "0px"
+   :padding (vw 1)
+   :color "#ffffff"
+   :background-color "#212529"
+   :border-image-slice 3
+   :border-image-width 3
+   :border-image-repeat "stretch"
+   :border-image-source "url('data:image/svg+xml;utf8,<?xml version=\"1.0\" encoding=\"UTF-8\" ?><svg version=\"1.1\" width=\"8\" height=\"8\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M3 1 h1 v1 h-1 z M4 1 h1 v1 h-1 z M2 2 h1 v1 h-1 z M5 2 h1 v1 h-1 z M1 3 h1 v1 h-1 z M6 3 h1 v1 h-1 z M1 4 h1 v1 h-1 z M6 4 h1 v1 h-1 z M2 5 h1 v1 h-1 z M5 5 h1 v1 h-1 z M3 6 h1 v1 h-1 z M4 6 h1 v1 h-1 z\" fill=\"rgb(255,255,255)\" /></svg>')"
+   :border-image-outset 0})
+
+(defn containers []
+  [[[:.base-container nes-container-dark]
+    [:.base-container-full (merge nes-container-dark {:width "100%" :height "100%"})]]
+   ;; hstack/vstack (shorthand for flex-row/column considering alignment & justification)
+   ;; e.g.) .hstack-hcenter-vcenter .hstack-vcenter-justify .vstack-justify
+   (let [align-center   {:align-items "center"}
+         justify        {:justify-content "space-between"}
+         justify-center {:justify-content "center"}]
+     (for [dir  ["h" "v"]
+           :let [opposite (if (= dir "h") "v" "h")
+                 base     {:display        "flex"
+                           :flex-direction (if (= dir "h") "row" "column")}]]
+       (for [[aabr astyle] [[nil {}]
+                            [(str opposite "center") align-center]]
+             [jabr jstyle] [[nil {}]
+                            ["justify" justify]
+                            [(str dir "center") justify-center]]
+             :let          [style (merge base astyle jstyle)]]
+         [[(keyword (str "." dir "stack" (when aabr (str "-" aabr)) (when jabr (str "-" jabr))))
+           style]
+          (when (and aabr jabr) ; Allow swapped writing
+            [(keyword (str "." dir "stack" (when jabr (str "-" jabr)) (when aabr (str "-" aabr))))
+             style])])))])
+
+(defn font-size []
+  ;;  h1-h5 & nonlinear-sizes
+  [(for [[lv relwidth] (nonlinear-sizes 1.3 1 5 10)]
      [(keyword (str ".font-size-" lv)) {:font-size (vw relwidth)}])
-   [:p  {:font-size (vw 2.0)}]
+   [:p  {:font-size (vw 2.0)}]])
 
-   ;; Margins & paddings override
-   (for [m-or-p           ["m" "p"]
-         [acro postfixes] [["t" ["-top"]]
-                           ["l" ["-left"]]
-                           ["r" ["-right"]]
-                           ["b" ["-bottom"]]
-                           ["" [""]]
-                           ["x" ["-left" "-right"]]
-                           ["y" ["-top" "-bottom"]]]
-         [lv relwidth]    (font-sizes 1.3 0.1 5 10)]
-     [(keyword (str "." m-or-p acro "-" lv))
-      (for [postfix postfixes]
-        {(keyword (str (if (= m-or-p "m")
-                         "margin"
-                         "padding") postfix)) (str (vw relwidth) " !important")})])
+(defn margins-and-paddings []
+  ;; Margins & paddings override
+  (for [m-or-p           ["m" "p"]
+        [acro postfixes] [["t" ["-top"]]
+                          ["l" ["-left"]]
+                          ["r" ["-right"]]
+                          ["b" ["-bottom"]]
+                          ["" [""]]
+                          ["x" ["-left" "-right"]]
+                          ["y" ["-top" "-bottom"]]]
+        [lv relwidth]    (nonlinear-sizes 1.3 0.1 5 10)]
+    [(keyword (str "." m-or-p acro "-" lv))
+     (for [postfix postfixes]
+       {(keyword (str (if (= m-or-p "m")
+                        "margin"
+                        "padding") postfix)) (str (vw relwidth) " !important")})]))
 
-   ;; Width & height override
-   (for [i (range 5 101 5)]
-     [[(keyword (str ".w-" i)) {:width (vw i)}]
-      [(keyword (str ".h-" i)) {:height (vw i)}]])
+(defn width-and-height []
+  ;; Width & height override
+  (for [i (range 5 101 5)]
+    [[(keyword (str ".vw-" i)) {:width (str (vw i) " !important")}]
+     [(keyword (str ".vh-" i)) {:height (str (vw i) " !important")}]]))
 
-   ;; Aux
-   [:hr {:width            "100%"
+(defn nes-override []
+  [[:.nes-container.is-rounded {:margin  "0px"
+                                :padding (vw 1)}]
+   [:label {:margin "0px"}]
+   [:input :.nes-input :.is-dark {:padding (str "0 " (vw 1))}]])
+
+(defn auxiliaries []
+  [[:hr {:width            "100%"
          :height           "0.1vw"
          :background-color "#ffffff"
          :margin           "0"
@@ -81,16 +127,10 @@
    [:.screen-image {:object-fit       "contain"
                     :background-color "#000000"
                     :width            "100%"
-                    :height           "100%"}]
+                    :height           "100%"}]])
 
-   ;; For nes components
-   [:.nes-container.is-rounded {:margin  "0px"
-                                :padding "1vw"}]
-   [:label {:margin "0px"}]
-   [:input :.nes-input :.is-dark {:padding "0vw 1vw"}]
-
-   ;;; Animations
-   ;; Bounce
+(defn animations []
+  [;; Bounce
    (vec (for [[name amplitude] [["bounce" 0.7]
                                 ["bounce-f" 1.5]
                                 ["bounce-ff" 3]
@@ -133,5 +173,15 @@
    (at-keyframes "fade-out"
                  ;; What a miserable, horrifying and NASTY implementation
                  [:0% {:opacity 100 :transform "translateY(0px)"}]
-                 [:100% {:opacity 0 :transform "translateY(0px)"}])
-   ))
+                 [:100% {:opacity 0 :transform "translateY(0px)"}])])
+
+(defn css []
+  (g/css
+   (outermost)
+   (containers)
+   (font-size)
+   (margins-and-paddings)
+   (width-and-height)
+   (auxiliaries)
+   (nes-override)
+   (animations)))

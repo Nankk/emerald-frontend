@@ -13,7 +13,7 @@
   [:div
    (when header [:div header])
    (let [group-name   (str (random-uuid))
-         font-size 3]
+         font-size 5]
      (into
       [:div]
       (for [i (range (count choices))]

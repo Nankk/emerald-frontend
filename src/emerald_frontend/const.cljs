@@ -169,21 +169,21 @@
   ["ソーサラー" "コンジャラー" "プリースト" "マギテック" "フェアリーテイマー" "デーモンルーラー" "ドルイド"])
 
 (def abilities
-  [{:name "ファイター" :category #{:warrior :cqc}}
-   {:name "グラップラー" :category #{:warrior :cqc}}
-   {:name "フェンサー" :category #{:warrior :cqc}}
-   {:name "シューター" :category #{:warrior}}
-   {:name "ソーサラー" :category #{:magician}}
-   {:name "コンジャラー" :category #{:magician}}
-   {:name "プリースト" :category #{:magician}}
-   {:name "フェアリーテイマー" :category #{:magician}}
-   {:name "マギテック" :category #{:magician}}
-   {:name "デーモンルーラー" :category #{:magician}}
-   {:name "ドルイド" :category #{:magician}}
-   {:name "スカウト" :category #{:other}}
-   {:name "レンジャー" :category #{:other}}
-   {:name "セージ" :category #{:other}}
-   {:name "エンハンサー" :category #{:other}}
-   {:name "バード" :category #{:other}}
-   {:name "ライダー" :category #{:other}}
-   {:name "アルケミスト" :category #{:other}}])
+  [{:name "ファイター" :category #{:warrior :cqc} :table :a}
+   {:name "グラップラー" :category #{:warrior :cqc} :table :a}
+   {:name "フェンサー" :category #{:warrior :cqc} :table :b}
+   {:name "シューター" :category #{:warrior} :table :b}
+   {:name "ソーサラー" :category #{:magician} :table :a}
+   {:name "コンジャラー" :category #{:magician} :table :a}
+   {:name "プリースト" :category #{:magician} :table :a}
+   {:name "フェアリーテイマー" :category #{:magician} :table :a}
+   {:name "マギテック" :category #{:magician} :table :a}
+   {:name "デーモンルーラー" :category #{:magician} :table :a}
+   {:name "ドルイド" :category #{:magician} :table :a}
+   {:name "スカウト" :category #{:other} :table :b}
+   {:name "レンジャー" :category #{:other} :table :b}
+   {:name "セージ" :category #{:other} :table :b}
+   {:name "エンハンサー" :category #{:other} :table :b}
+   {:name "バード" :category #{:other} :table :b}
+   {:name "ライダー" :category #{:other} :table :b}
+   {:name "アルケミスト" :category #{:other} :table :b}])

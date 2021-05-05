@@ -36,24 +36,24 @@
           {:keys [weapons shield armor]}                           :equipment
           {:keys [base initial growth total bonus]}                :parameters
           {{:keys [scout ranger sage]} :packages}                  :reference-values} char]
-     [:div.nes-container.is-dark.is-rounded.grid-container {:style {:width (vw 90) :height (vw 50)}}
+     [:div.base-container.grid-container {:style {:width (vw 90) :height (vw 50)}}
       [:div.aux-left
-       [:div.d-flex.flex-row.align-items-center.justify-content-center.w-100.h-100
-        [:div.nes-container.is-dark.is-rounded.d-flex.flex-row.align-items-center.justify-content-center
+       [:div.hstack-vcenter-justify.w-100.h-100
+        [:div.base-container.hstack-vcenter-justify
          {:style    {:height (vw 7)}
           :on-click #(move-page -1)}
          [:div "◁"]]]]
       [:div.aux-right
-       [:div.d-flex.flex-row.align-items-center.justify-content-center.w-100.h-100
-        [:div.nes-container.is-dark.is-rounded.d-flex.flex-row.align-items-center.justify-content-center
+       [:div.hstack-vcenter-justify.w-100.h-100
+        [:div.base-container.hstack-vcenter-justify
          {:style    {:height (vw 7)}
           :on-click #(move-page 1)}
          [:div "▷"]]]]
       [:div.status {:style {:font-size (vw 1.5)}}
-       [:div.nes-container.is-dark.is-rounded.h-100
+       [:div.base-container.h-100
         [:div (str first " " middle " " last)] ; Name
         [:div (str "（" (when (or head origin) (str head origin "の")) name "）")] ; Species
-        [:div.d-flex.flex-row.align-items-center
+        [:div.hstack-vcenter
          [:img.profile-image
           {:src   (str const/server-url "/characters/" idx "/image")
            :style {:width "50%" :height "50%"}}]
@@ -65,7 +65,7 @@
            [:tr [:td "EXP"] [:td (- (:total exp) (:used exp))]]
            [:tr [:td "G"] [:td g]]]]]]]
       [:div.personality {:style {:font-size (vw 1.5)}}
-       [:div.nes-container.is-dark.is-rounded.h-100
+       [:div.base-container.h-100
         [:table.nes-table.is-dark.w-100
          [:tbody
           [:tr [:td "性別"] [:td (case gender "male" "男" "female" "女" "LGBTTIQQ2SA")]]
@@ -74,7 +74,7 @@
           [:tr [:td "名誉点"] [:td honor]]
           ]]]]
       [:div.equipments {:style {:font-size (vw 1.5)}}
-       [:div.nes-container.is-dark.is-rounded.h-100
+       [:div.base-container.h-100
         [:table.nes-table.is-dark.w-100
          [:tbody
           [:tr [:td "武器"] [:td (when weapons
@@ -85,7 +85,7 @@
           [:tr [:td "鎧"] [:td (:name armor)]]
           ]]]]
       [:div.parameters {:style {:font-size (vw 1.5)}}
-       [:div.nes-container.is-dark.is-rounded.h-100
+       [:div.base-container.h-100
         [:table.nes-table.is-dark.w-100
          [:thead
           [:tr [:th "能力値"] [:th "基礎"] [:th "初期"] [:th "成長"] [:th "計(含修正)"] [:th "ボーナス"]]]
@@ -102,7 +102,7 @@
                                          [:td.center (bonus p)]])
                                       [:dex :agi :str :con :int :pow]))]]]
       [:div.package {:style {:font-size (vw 1.5)}}
-       [:div.nes-container.is-dark.is-rounded.h-100
+       [:div.base-container.h-100
         [:table.nes-table.is-dark.w-100
          [:thead
           [:tr [:th "判定パッケージ"] [:th "技巧"] [:th "運動"] [:th "観察"] [:th "知識"]]]
@@ -111,8 +111,8 @@
           [:tr [:td "レンジャー"] [:td (ranger :dex)] [:td (ranger :agi)] [:td (ranger :int)] [:td "-"]]
           [:tr [:td "セージ"] [:td "-"] [:td "-"] [:td "-"] [:td (sage :int)]]]]]]
       [:div.languages {:style {:font-size (vw 1.5)}}
-       [:div.nes-container.is-dark.is-rounded.h-100
-        (into [:div.d-flex.flex-row {:style {:width (vw 44) :overflow "auto"}}]
+       [:div.base-container.h-100
+        (into [:div.hstack {:style {:width (vw 44) :overflow "auto"}}]
               (for [groups (let [rows 4] (partition rows rows (repeat {}) (char :languages)))]
                 [:table.nes-table.is-dark.text-nowrap {:style {:min-width (vw 20)}}
                  [:thead
@@ -160,24 +160,24 @@
 
 (defn- status-skills [char idx]
   [:div#character-status-skills
-   [:div.nes-container.is-dark.is-rounded.grid-container {:style {:width (vw 90) :height (vw 50)}}
+   [:div.base-container.grid-container {:style {:width (vw 90) :height (vw 50)}}
     [:div.aux-left
-     [:div.d-flex.flex-row.align-items-center.justify-content-center.w-100.h-100
-      [:div.nes-container.is-dark.is-rounded.d-flex.flex-row.align-items-center.justify-content-center
+     [:div.hstack-vcenter-justify.w-100.h-100
+      [:div.base-container.hstack-vcenter-justify
        {:style {:height (vw 7)}
         :on-click #(move-page -1)}
        [:div "◁"]]]]
     [:div.aux-right
-     [:div.d-flex.flex-row.align-items-center.justify-content-center.w-100.h-100
-      [:div.nes-container.is-dark.is-rounded.d-flex.flex-row.align-items-center.justify-content-center
+     [:div.hstack-vcenter-justify.w-100.h-100
+      [:div.base-container.hstack-vcenter-justify
        {:style {:height (vw 7)}
         :on-click #(move-page 1)}
        [:div "▷"]]]]
     [:div.abilities {:style {:font-size (vw 1.5)}}
-     [:div.nes-container.is-dark.is-rounded.h-100
+     [:div.base-container.h-100
       [:div.ml-2 "技能"]
       [:hr]
-      (into [:div.d-flex.flex-row]
+      (into [:div.hstack]
             (for [groups (let [rows 7] (partition rows rows (repeat nil) (char :abilities)))]
               [:table.nes-table.is-dark.text-nowrap {:style {:min-width (vw 20)}}
                (into [:tbody]
@@ -186,17 +186,17 @@
                         [:td (a :name)]
                         [:td.center (str "Lv " (a :level))]]))]))]]
     [:div.skills {:style {:font-size (vw 1.5)}}
-     [:div.nes-container.is-dark.is-rounded.h-100
-      (into [:div.d-flex.flex-row {:style {:width (vw 72) :overflow "auto"}}]
+     [:div.base-container.h-100
+      (into [:div.hstack {:style {:width (vw 72) :overflow "auto"}}]
             (for [key skills]
               (when (-> char :skills key)
                 (case key
                   :bird (when (or (-> char :skills :bird :songs)
                                   (-> char :skills :bird :finales))
-                          [:div.nes-container.is-dark.is-rounded.text-nowrap
+                          [:div.base-container.text-nowrap
                            [:div (skill-key->str key)]
                            [:hr]
-                           [:div.d-flex.flex-row
+                           [:div.hstack
                             [:div {:style {:margin-right (vw 1)}}
                              [:div "呪歌"]
                              [:hr]
@@ -209,7 +209,7 @@
                              [:div {:style {:height (vw 15) :overflow "auto"}}
                               (for [item (-> char :skills :bird :finales)]
                                 [:div item])]]]])
-                  [:div.nes-container.is-dark.is-rounded.text-nowrap
+                  [:div.base-container.text-nowrap
                    [:div (skill-key->str key)]
                    [:hr]
                    (into [:div {:style {:height (vw 17) :overflow "auto"}}]

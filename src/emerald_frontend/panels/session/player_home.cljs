@@ -18,14 +18,14 @@
     [:img.screen-image {:src "img/dev/dragon-wars.png"}]]])
 
 (defn title [char]
-  [:div.title.font-size-3.w-100.h-100
-   [:div.d-flex.flex-column.justify-content-center.w-100.h-100
+  [:div.title.font-size-5.w-100.h-100
+   [:div.vstack-hcenter.w-100.h-100
     [:div "Emerald"]
     [:div "aaa"]]])
 
 (defn command [char]
   [:div.command
-   [:div.nes-container.is-dark.is-rounded.w-100.h-100.font-size-2
+   [:div.base-container-full.font-size-4
     (let [icon-size (vw 5)
           gap       (vw 1)
           gap-icon  (vw 1.8)
@@ -33,38 +33,52 @@
                      ["まほう" #()]
                      ["そうび" #()]
                      ["つよさ" #(panel/show-modal :player/show-status)]]]
-      (into [:div.d-flex.flex-column]
+      (into [:div.vstack]
             (for [c choices]
-              [:div.d-flex.flex-row.align-items-center {:style {:margin gap} :on-click (c 1)}
+              [:div.hstack-vcenter {:style {:margin gap} :on-click (c 1)}
                [:img {:style {:margin-right gap-icon :width icon-size :height icon-size}}]
                [:div (c 0)]])))]])
 
-;; (defn level-uppable? [char]
-;;   (let [achievements (get-in char [:status :achievements])
-;;         free-exp     (- (get-in char [:status :exp :total])
-;;                         (get-in char [:status :exp :used]))]
-;;     (or (> achievements 0)
-;;         )))
+(defn params-upgradable? [char]
+  (> (get-in char [:status :achievements :free]) 0))
+
+(defn ability-upgradable? [char exp-table]
+  (let [abl-list     const/abilities
+        cur-lvs      (into {} (for [{:keys [name level]} (:abilities char)] [name level]))
+        able-or-nots (for [{:keys [name]} abl-list
+                           :let           [lv (or (cur-lvs name) 0)
+                                           type (:table (first (filter #(= (% :name) name) abl-list)))
+                                           required (type (first (filter #(= (% :level) (inc lv)) exp-table)))]]
+                       (>= (get-in char [:status :exp :free]) required))]
+    (some true? able-or-nots)))
+
+(def lv-uppable-notifier
+  (let [exp-table (reagent/atom nil)]
+    (go (reset! exp-table (:body (<! (http/<get-data "/tables/exp")))))
+    (fn [char]
+      (when (and @exp-table
+                 (or (params-upgradable? char)
+                     (ability-upgradable? char @exp-table)))
+        [:div.position-absolute.bounce.font-size-5
+         {:style {:padding          (str "0 " (vw 1))
+                  :top              0
+                  :left             0
+                  :background-color "rgba(30, 70, 140, 0.5)"}}
+         "UP⇧"]))))
 
 (defn status-summary [char char-idx]
   (let [{{{:keys [first middle last]} :name}       :personality
          {:keys [level max-hp hp max-mp mp g exp]} :status} char]
-    [:div.status-summary
-     [:div.nes-container.is-dark.is-rounded.w-100.h-100
-      [:div.d-flex.flex-row.align-items-center.w-100.h-100.position-relative
-       (when true
-         [:a.position-absolute.animation-bounce.font-size-3
-          {:style    {:padding          (str "0 " (vw 1))
-                      :top              0
-                      :left             0
-                      :background-color "rgba(30, 70, 140, 0.5)"}
-           :on-click #(panel/show-modal :player/growth)}
-          "UP⇧"])
+    [:div.status-summary.font-size-3
+     [:div.base-container-full
+      [:div.hstack-vcenter.w-100.h-100.position-relative
+       [lv-uppable-notifier char]
        [:img.profile-image
-        {:src   (str const/server-url "/characters/" char-idx "/image")
-         :style {:width (vw 10) :height (vw 10)}}]
-       [:div.d-flex.flex-column.justify-content-between
-        [:div (str first " " middle " " last)]
+        {:src      (str const/server-url "/characters/" char-idx "/image")
+         :style    {:width (vw 10) :height (vw 10)}
+         :on-click #(panel/show-modal :player/growth)}]
+       [:div.vstack-justify
+        [:div.pb-3 (str first " " middle " " last)]
         [:table.nes-table.is-dark
          [:tbody
           [:tr [:td "Lv"] [:td level] [:td ""] [:td ""]]
@@ -72,35 +86,36 @@
           [:tr [:td "MP"] [:td (str mp "/" max-mp)] [:td "Exp"] [:td (:free exp)]]]]]]]]))
 
 (defn notes [char]
-  [:div.notes.font-size-2
-   [:div.nes-container.is-dark.is-rounded.w-100.h-100
-    [:div.font-size-1 "メモ欄"]
+  [:div.notes.font-size-3
+   [:div.base-container-full.p-3
+    [:div "メモ欄"]
+    [:hr.w-100]
     [:div "クソゲーRTA、はっじまっるよー！"]
     [:div "まずはキャラ作成からです！"]]])
 
 (defn settings []
-  [:div.nes-container.is-dark.is-rounded {:style {:width (vw 33) :height (vw 40)}}
+  [:div.base-container {:style {:width (vw 33) :height (vw 40)}}
    [list/choice
     :choices [{:text "セッションから離脱" :on-click #(rf/dispatch-sync [::events/move-panel-to :home])}]]
    ])
 
 (defn exit []
-  [:div.nes-container.is-dark.is-rounded
+  [:div.base-container
    [list/choice
-    :header [:div.font-size-3 "ホームに戻りますか？"]
+    :header [:div.font-size-5 "ホームに戻りますか？"]
     :choices [{:text "はい" :on-click #(rf/dispatch-sync [::events/move-panel-to :home])}
               {:text "いいえ" :on-click #(panel/close-modal :player/exit)}]]])
 
 (defn panels [char char-idx]
   [:div.w-100.h-100 {:style {:position "relative"}}
    [:div#player-home.w-100.h-100
-    [:div.grid-container.w-100.h-100.font-size-1
+    [:div.grid-container.w-100.h-100.font-size-2
      [screen char]
      [title char]
      [command char]
      [status-summary char char-idx]
      [notes char]]]
-   [:div.font-size-2
+   [:div.font-size-4
     [:div {:on-click #(panel/show-modal :player/exit)}
      [:i.fas.fa-sign-out-alt {:style {:position "absolute" :top (vw 1.5) :left (vw 93)}}]]
     [:div {:on-click #(panel/show-modal :player/settings)}
@@ -112,9 +127,9 @@
 
 (defn main []
   (let [char     @(rf/subscribe [::subs/cur-char])
-        char-idx @(rf/subscribe [::subs/cur-char-idx])]
-    [growth/main char char-idx]
+        idx @(rf/subscribe [::subs/cur-char-idx])]
+    [growth/main char]
     ;; [:div.w-100.h-100
-    ;;  [panels char char-idx]
-    ;;  [panel/modal :player/growth [(vw 1) (vw 1)] [growth/main char char-idx]]]
+    ;;  [panels char idx]
+    ;;  [panel/modal :player/growth [(vw 3) (vw 4.5)] [growth/main char idx]]]
     ))
