@@ -113,17 +113,19 @@
       [:div.languages {:style {:font-size (vw 1.5)}}
        [:div.base-container.h-100
         (into [:div.hstack {:style {:width (vw 44) :overflow "auto"}}]
-              (for [groups (let [rows 4] (partition rows rows (repeat {}) (char :languages)))]
+              (for [groups (let [rows 4] (partition rows rows (repeat []) (char :languages)))]
                 [:table.nes-table.is-dark.text-nowrap {:style {:min-width (vw 20)}}
                  [:thead
                   [:tr [:th "言語"] [:th "会話"] [:th "読文"]]]
                  (into [:tbody]
-                       (for [l groups]
+                       (for [[name {:keys [oral literal]}] groups]
                          (let [->str #(if (boolean? %) (if % "◯" "-") %)]
                            [:tr
-                            [:td (->str (l :name))]
-                            [:td.center (->str (l :oral))]
-                            [:td.center (->str (l :literal))]])))]))]]])])
+                            [:td (->str name)]
+                            [:td.center (->str oral)]
+                            [:td.center (->str literal)]])
+                         ))]
+                ))]]])])
 
 (def skill-key->str
   {:general     "戦闘特技"
@@ -181,10 +183,10 @@
             (for [groups (let [rows 7] (partition rows rows (repeat nil) (char :abilities)))]
               [:table.nes-table.is-dark.text-nowrap {:style {:min-width (vw 20)}}
                (into [:tbody]
-                     (for [a groups :when a]
+                     (for [[name lv] groups :when name]
                        [:tr
-                        [:td (a :name)]
-                        [:td.center (str "Lv " (a :level))]]))]))]]
+                        [:td name]
+                        [:td.center (str "Lv " lv)]]))]))]]
     [:div.skills {:style {:font-size (vw 1.5)}}
      [:div.base-container.h-100
       (into [:div.hstack {:style {:width (vw 72) :overflow "auto"}}]

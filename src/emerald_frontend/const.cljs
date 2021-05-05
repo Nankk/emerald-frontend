@@ -12,76 +12,76 @@
   [{:name        "人間"
     :feature     "運命変転：運命をコロコロする"
     :description "一般的な種族で数が多くて云々"
-    :languages   [{:name "交易共通語" :oral true :literal true}
-                  {:name "地方語" :oral true :literal true}]
+    :languages   {"交易共通語" {:oral true :literal true}
+                  "地方語"     {:oral true :literal true}}
     :aptitudes   ["戦士" "剣士" "拳闘士" "密偵" "魔術師" "操霊術師" "神官" "魔法戦士" "魔法剣士"]}
    {:name        "エルフ"
     :feature     "親水性：水によく溶ける"
     :description "人混みで鋭利な耳が突き刺さる死亡事故が絶えない"
-    :languages   [{:name "交易共通語" :oral true :literal true}
-                  {:name "エルフ語" :oral true :literal true}]
+    :languages   {"交易共通語" {:oral true :literal true}
+                  "エルフ語"   {:oral true :literal true}}
     :aptitudes   ["剣士" "拳闘士" "密偵" "魔術師" "操霊術師" "神官" "魔法剣士"]}
    {:name        "ドワーフ"
     :feature     "耐火：安心のタイガー社製"
     :description "ロリとヒゲしかいない特異な種族。それ以外の容姿に生まれると殺されてしまうのだ"
-    :languages   [{:name "交易共通語" :oral true :literal true}
-                  {:name "ドワーフ語" :oral true :literal true}]
+    :languages   {"交易共通語" {:oral true :literal true}
+                  "ドワーフ語" {:oral true :literal true}}
     :aptitudes   ["戦士" "拳闘士" "神官" "魔法戦士"]}
    {:name        "タビット"
     :feature     "跳躍：跳躍ロールに100%成功する"
     :description "月で餅を突いて一生を終えるため地球上には存在しない"
-    :languages   [{:name "交易共通語" :oral true :literal true}
-                  {:name "神紀文明語" :oral false :literal true}]
+    :languages   {"交易共通語" {:oral true :literal true}
+                  "神紀文明語" {:oral false :literal true}}
     :aptitudes   ["魔術師" "操霊術師"]}
    {:name        "リカント"
     :feature     "変身：柴犬になれる"
     :description "月夜の晩によく遠吠えをする。ご近所トラブルに発展することもしばしば"
-    :languages   [{:name "交易共通語" :oral true :literal true}
-                  {:name "リカント語" :oral true :literal true}]
+    :languages   {"交易共通語" {:oral true :literal true}
+                  "リカント語" {:oral true :literal true}}
     :aptitudes   ["戦士" "剣士" "拳闘士" "密偵"]}
    {:name        "ナイトメア"
     :feature     "穢れ：中二心をくすぐれる"
     :description "社会不適合者をカッコよく言い換えたもの。本人は満足そう"
-    :languages   []
+    :languages   {}
     :aptitudes   ["戦士" "拳闘士" "密偵" "魔術師" "操霊術師" "神官" "魔法戦士"]}])
 
 (def jobs
   [{:name        "戦士"
     :description "いわゆるタンク。PTに1人は入れとかないと壊滅するんジャー"
-    :abilities   [{:name "ファイター" :level 2}]
+    :abilities   {"ファイター" 2}
     :exp         {:total 3000 :used 2000}}
    {:name        "剣士"
     :description "紙装甲である代わりにガンガンクリティカル出すんジャー"
-    :abilities   [{:name "フェンサー" :level 2}]
+    :abilities   {"フェンサー" 2}
     :exp         {:total 3000 :used 1500}}
    {:name        "魔法戦士"
     :description "剣と魔法のよくばりセット"
-    :abilities   [{:name "ファイター" :level 1}]
+    :abilities   {"ファイター" 1}
     :exp         {:total 3500 :used 3500}}
    {:name        "魔法剣士"
     :description "「まほうけん」が使える。わけではない。魔法と剣が使える"
-    :abilities   [{:name "フェンサー" :level 1}]
+    :abilities   {"フェンサー" 1}
     :exp         {:total 3500 :used 3000}}
    {:name        "拳闘士"
     :description "男と生まれたからには、誰でも一生の内一度は夢見る「地上最強の男」。グラップラーとは、「地上最強の男」を目指す格闘士のことである（例のBGM）"
-    :abilities   [{:name "グラップラー" :level 2}]
+    :abilities   {"グラップラー" 2}
     :exp         {:total 3000 :used 2000}}
    {:name        "密偵"
     :description "スパイ業を営む。国家の陰謀の成否は彼に掛かっている"
-    :abilities   [{:name "スカウト" :level 2}
-                  {:name "フェンサー" :level 1}]
+    :abilities   {"スカウト"   2
+                  "フェンサー" 1}
     :exp         {:total 3000 :used 2000}}
    {:name        "魔術師"
     :description "黒魔道士のこと"
-    :abilities   [{:name "ソーサラー" :level 2}]
+    :abilities   {"ソーサラー" 2}
     :exp         {:total 3000 :used 2000}}
    {:name        "操霊術師"
     :description "公式イラストのおねえさんがエロい"
-    :abilities   [{:name "コンジャラー" :level 2}]
+    :abilities   {"コンジャラー" 2}
     :exp         {:total 3000 :used 2000}}
    {:name        "神官"
     :description "白魔道士のこと"
-    :abilities   [{:name "プリースト" :level 2}]
+    :abilities   {"プリースト" 2}
     :exp         {:total 3000 :used 2000}}])
 
 (def job->category

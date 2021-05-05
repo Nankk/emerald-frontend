@@ -27,7 +27,7 @@
      [:div {:style {:height (vw 5)}}]]))
 
 (defn main-panel []
-  [:div.hstack-vcenter-justify.w-100.h-100
+  [:div.hstack-vcenter-hcenter.w-100.h-100
    {:style {:font-family @(rf/subscribe [::subs/font-family])}}
    [:div#main-panel.position-relative
     {:style

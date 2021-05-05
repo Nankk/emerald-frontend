@@ -26,15 +26,15 @@
    :equipments  {}
    :accessories {:head   [] :foot      [] :neck [] :face       [] :back [] :waist []
                  :others [] :left-hand [] :ear  [] :right-hand []}
-   :abilities   [{:name "スカウト" :level 1}]
+   :abilities   {}
    :skills      {:general {:manual []}}
    :status      {:exp   {:total 0 :used 0} :honor 0}
    :options     {:nature {:born        {:name "" :detail ""}
                           :infancy     {:event {:name "" :detail "" :type ""} :happening {:name ""}}
                           :childhood   {:event {:name "" :detail ""} :happening {:name ""}}
                           :adolescence {:event {:name "" :detail ""} :departure-reason {:name ""}}}}
-   :items       []
-   :languages   []
+   :items       {}
+   :languages   {}
    :parameters  {:base    {:physique 0 :technique 0 :mind 0}
                  :initial {:dex 0 :agi 0 :str 0 :con 0 :int 0 :pow 0}
                  :growth  {:dex 0 :agi 0 :str 0 :con 0 :int 0 :pow 0}}})
@@ -47,38 +47,29 @@
 
   (defonce *errors (atom nil))
 
-  (defn- merge-abilities [vec1 vec2]
-    (loop [abils vec1
-           adds  vec2]
-      (if-not (empty? adds)
-        (let [add (first adds)]
-          (recur (if (some #{(add :name)} (map :name abils))
-                   (let [idx (first (keep-indexed #(when (= (%2 :name) (add :name)) %1) abils))]
-                     (update-in abils [idx :level] #(+ % (add :level))))
-                   (conj abils add))
-                 (rest adds)))
-        abils)))
-
   (defn- character-formatted
     "Returns a formatted character for character storage server.
     :additional-items are merged into main status and removed."
-    [character]
-    (let [c character
+    [{{:keys [ability exp languages]} :additional-items
+      {{:keys [origin]} :species}           :personality
+      :as                                   character}]
+    (let [exp-consumed (if (and ability (ability :name)
+                                (not (get-in character [:abilities (ability :name)])))
+                         (ability :exp)
+                         0)
+          _ (println "exp-consumed" exp-consumed)
+          c character
           c (cond-> c
               ;; Origin
-              (get-in character [:personality :species :origin])
-              (update ,, :languages (comp vec concat)
-                         ((first
-                           (filter #(= (% :name) (get-in character [:personality :species :origin]))
-                                   const/species-list))
-                          :languages))
-              ;; Abilities
-              (get-in character [:additional-items :abilities])
-              (update ,, :abilities #(merge-abilities % (get-in character [:additional-items :abilities]))))
-          c (update c :languages (comp vec concat) (get-in character [:additional-items :languages]))
-          c (update-in c [:status :exp :total] #(+ % (get-in character [:additional-items :exp])))
-          c (let [exp-diff (* (count (get-in character [:additional-items :abilities])) 500)]
-              (update-in c [:status :exp :used] #(+ % exp-diff)))
+              origin
+              (update ,,
+               :languages
+               (fn [ls] (merge ls (:languages (first (filter #(= (% :name) origin) const/species-list))))))
+              ;; Ability
+              ability (update ,, :abilities #(merge % {(ability :name) 1})))
+          c (update c :languages merge languages)
+          c (update-in c [:status :exp :total] #(+ % exp))
+          c (update-in c [:status :exp :used] #(+ % exp-consumed))
           c (dissoc c :additional-items)
           c (walk/postwalk #(if (map? %) (into {} (remove (comp nil? second) %)) %) c)]
       c))
@@ -129,10 +120,10 @@
        [:div.font-size-3 "技能"]
        [:hr]
        (into [:div]
-             (for [ability (character :abilities)]
+             (for [[name lv] (character :abilities)]
                [:div.hstack-justify.w-100
-                [:div.font-size-3 (ability :name)]
-                [:div.font-size-3 (str "Lv " (ability :level))]]))]
+                [:div.font-size-3 name]
+                [:div.font-size-3 (str "Lv " lv)]]))]
       [:div {:style {:width        "33%"
                      :border-right (str (vw 0.4) " solid " (colors/base 10))}}
        [:div.font-size-3 "戦闘特技"]
@@ -144,8 +135,8 @@
        [:div.font-size-3 "言語"]
        [:hr]
        (into [:div]
-             (for [language (character :languages)]
-               [:div.font-size-3 (str (language :name) " [" (when (language :oral) "話") (when (language :literal) "読") "]")]))]]])
+             (for [[name {:keys [oral literal]}] (character :languages)]
+               [:div.font-size-3 (str name " [" (when oral "話") (when literal "読") "]")]))]]])
 
   (defn- confirmation-params [character]
     [:div.params.w-100.h-100
@@ -168,11 +159,11 @@
        (let [{{{:keys [technique physique mind]}      :base
                {stg :str :keys [dex agi con int pow]} :initial} :parameters}
              character
-             lv                    (apply max (map :level (character :abilities)))
+             lv                    (apply max (vals (character :abilities)))
              hp                    (+ (+ physique con) (* lv 3))
              magical-ability-names (map :name (filter #(get-in % [:category :magician]) const/abilities))
-             magic-lv-total        (reduce + (get (filter #(some #{(% :name)} magical-ability-names)
-                                                          (character :abilities)) 1))
+             magic-lv-total        (reduce + (keep #(when (some #{(% 0)} magical-ability-names) (% 1))
+                                                   (character :abilities)))
              mp                    (+ (+ mind pow) (* magic-lv-total 3))
              {:keys [total used]}  (-> character :status :exp)]
          [:div.hstack-justify.w-100
@@ -287,10 +278,11 @@
                      :g              [[:status :g] num]
                      :honor          [[:status :honor] num]
                      :abyss-shard    [[:items] (if (pos? num)
-                                                 [{:uuid  "36254798-5944-4699-b6d3-e458cbec8487"
+                                                 {"36254798-5944-4699-b6d3-e458cbec8487"
+                                                  {:uuid  "36254798-5944-4699-b6d3-e458cbec8487"
                                                    :name  "アビスシャード"
-                                                   :count num}]
-                                                 [])])]
+                                                   :count num}}
+                                                 {})])]
         (swap! cur-char #(assoc-in % ks v)))))
 
   (defn high-lv-content []
@@ -863,14 +855,17 @@
                                                         [:options :nature :childhood :event]
                                                         {:abstract       (childhood :abstract)
                                                          :detail (childhood :detail)})))
-                      (when-let [ability (childhood :ability)]
+                      (when (childhood :ability)
                         (swap! cur-char (fn [c] (assoc-in c
-                                                          [:additional-items :abilities]
-                                                          [{:name ability :level 1}]))))
+                                                          [:additional-items :ability]
+                                                          {:name (childhood :ability)
+                                                           :exp  (childhood :exp)}))))
                       (when @*language
                         (swap! cur-char (fn [c] (assoc-in c
                                                           [:additional-items :languages]
-                                                          [@*language]))))
+                                                          {(@*language :name)
+                                                           {:oral (@*language :oral)
+                                                            :literal (@*language :literal)}}))))
                       (container/switch-panels :cc-nature/childhood :cc-nature/happening-childhood :left))}
                   {:text "いいえ" :on-click #(panel/close-modal :childhood-detail)}]
         :direction :horizontal]]))
@@ -1206,11 +1201,15 @@
       :choices-size 4
       :choices (vec (for [magical-ability ["ソーサラー" "コンジャラー" "プリースト"]]
                       {:text     magical-ability
-                       :on-click #(do (reset! *cur-magical-ability magical-ability)
-                                      (swap! cur-char (fn [c] (assoc-in c
-                                                                        [:abilities]
-                                                                        (conj (@*cur-job :abilities) {:name magical-ability :level 2}))))
-                                      (container/switch-panels :cc-nature/job :cc-nature/born :left))}))]])
+                       :on-click
+                       #(do (reset! *cur-magical-ability magical-ability)
+                            (swap! cur-char
+                                   (fn [c] (assoc-in c
+                                                     [:abilities]
+                                                     (conj
+                                                      (@*cur-job :abilities)
+                                                      {magical-ability 2}))))
+                            (container/switch-panels :cc-nature/job :cc-nature/born :left))}))]])
 
   (defn job-main []
     [:div#cc-nature-job.w-100.h-100.p-1
