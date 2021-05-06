@@ -10,7 +10,7 @@
 (defn loading []
   (let [loading? @(rf/subscribe [::subs/loading?])]
     [:div.w-100.h-100.vstack-hcenter-vcenter.position-absolute
-     {:class (when-not loading? "fade-out-fast")
+     {:class (when-not loading? "fade-out-fastest")
       :style {:z-index          999
               :top              0
               :left             0

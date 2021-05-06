@@ -34,7 +34,9 @@
          width           (* 1.7 scale)
          checked-state   (reagent/atom (or checked false))]
      (fn []
-       [:div.hstack-vcenter
+       [:a.hstack-vcenter {:on-click #(do
+                                        (when on-click (on-click @checked-state))
+                                        (swap! checked-state not))}
         [:div.position-relative {:style {:margin-right (vw (* 0.5 scale-between scale))}}
          ;; Border
          [:div.nes-container.is-dark
@@ -53,14 +55,11 @@
                    :top       (vw (* scale -1.2))}}
           (when @checked-state "✔")]
          ;; Cursor area
-         [:a.position-absolute.font-size-6
+         [:div.position-absolute.font-size-6
           {:style    {:background-color "rgba(0,0,0,0)"
                       :top              0
                       :left             0
                       :width            (vw 1.7)
-                      :height           (vw 1.7)}
-           :on-click #(do
-                        (when on-click (on-click @checked-state))
-                        (swap! checked-state not))}]]
+                      :height           (vw 1.7)}}]]
         ;; User specified content
         [:div content]]))))

@@ -64,7 +64,7 @@
   [:div.base-container
    (case @*delete-confirmation-depth
      3 [:div.font-size-5 "キャラクターを削除しています…"]
-     4 [:div
+     4 [:div.vstack-vcenter-hcenter
         [:div.font-size-5 "削除しました。"]
         [:button.nes-btn.is-primary {:on-click #(do (reset! *delete-confirmation-depth 0)
                                                     (panel/close-modal :home-delete-confirmation))}

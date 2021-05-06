@@ -2,6 +2,8 @@
   (:require
    [emerald-frontend.util.css :refer [vw]]
    [emerald-frontend.const :as const]
+   [emerald-frontend.subs :as subs]
+   [re-frame.core :as rf]
    [reagent.core :as reagent]
    ))
 
@@ -27,9 +29,10 @@
   (swap! page-idx #(Math/abs (rem (+ diff %) 2)))
   (println @page-idx))
 
-(defn- status-main [char idx]
+(defn- status-main [char]
   [:div#character-status-main
-   (let [{{:keys [age gender]}                                     :personality
+   (let [{:keys [idx]
+          {:keys [age gender]}                                     :personality
           {{:keys [first middle last]} :name
            {:keys [name head origin]}  :species}                   :personality
           {:keys [level max-hp max-mp hp mp exp honor g impurity]} :status
@@ -38,14 +41,14 @@
           {{:keys [scout ranger sage]} :packages}                  :reference-values} char]
      [:div.base-container.grid-container {:style {:width (vw 90) :height (vw 50)}}
       [:div.aux-left
-       [:div.hstack-vcenter-justify.w-100.h-100
-        [:div.base-container.hstack-vcenter-justify
+       [:div.hstack-vcenter-hcenter.w-100.h-100
+        [:div.base-container.hstack-vcenter-hcenter
          {:style    {:height (vw 7)}
           :on-click #(move-page -1)}
          [:div "◁"]]]]
       [:div.aux-right
-       [:div.hstack-vcenter-justify.w-100.h-100
-        [:div.base-container.hstack-vcenter-justify
+       [:div.hstack-vcenter-hcenter.w-100.h-100
+        [:div.base-container.hstack-vcenter-hcenter
          {:style    {:height (vw 7)}
           :on-click #(move-page 1)}
          [:div "▷"]]]]
@@ -164,14 +167,14 @@
   [:div#character-status-skills
    [:div.base-container.grid-container {:style {:width (vw 90) :height (vw 50)}}
     [:div.aux-left
-     [:div.hstack-vcenter-justify.w-100.h-100
-      [:div.base-container.hstack-vcenter-justify
+     [:div.hstack-vcenter-hcenter.w-100.h-100
+      [:div.base-container.hstack-vcenter-hcenter
        {:style {:height (vw 7)}
         :on-click #(move-page -1)}
        [:div "◁"]]]]
     [:div.aux-right
-     [:div.hstack-vcenter-justify.w-100.h-100
-      [:div.base-container.hstack-vcenter-justify
+     [:div.hstack-vcenter-hcenter.w-100.h-100
+      [:div.base-container.hstack-vcenter-hcenter
        {:style {:height (vw 7)}
         :on-click #(move-page 1)}
        [:div "▷"]]]]
@@ -220,13 +223,12 @@
                                       (-> char :skills key))]
                            [:div item]))]))))]]]])
 
-(defn- container [char idx]
-  (case @page-idx
-    0 [status-main char idx]
-    1 [status-skills char idx]))
+(defn- container []
+  (when-let [char @(rf/subscribe [::subs/cur-char])]
+    (case @page-idx
+      0 [status-main char]
+      1 [status-skills char])))
 
-(defn main [char idx]
+(defn main []
   (reset! page-idx 0)
-  (if char
-    [container char idx]
-    [:div]))
+  [container])

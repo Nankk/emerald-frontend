@@ -1,5 +1,6 @@
 (ns emerald-frontend.components.panel
   (:require [clojure.walk :as walk]
+            [emerald-frontend.util.css :refer [vw]]
             [reagent.core :as reagent]))
 
 ;;; Test panel ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -50,10 +51,10 @@
            :style {:display display
                    :z-index z-idx
                    :position "absolute"
-                   :top "0px"
-                   :left "0px"
-                   :width "100vw"
-                   :height "100vh"
+                   :top (vw -100)
+                   :left (vw -100)
+                   :width (vw 300)
+                   :height (vw 300)
                    :background-color "#000000"
                    :opacity "0.3"}}]))
 

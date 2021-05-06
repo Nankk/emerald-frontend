@@ -219,7 +219,7 @@
        [panel/modal :confirmation-complete [(vw 20) (vw 35)] {:backdropper-rigid? true}
         [:div.base-container
          [:div.font-size-5 "作成が完了しました！"]
-         [:div.hstack-vcenter-justify.w-100
+         [:div.hstack-vcenter-hcenter.w-100
           [:button.nes-btn.is-primary {:on-click #(do (panel/close-all-modals)
                                                       (reset! cur-char char-default)
                                                       (container/switch-panels :cc-nature/confirmation :home :down))}
@@ -308,7 +308,9 @@
                 (map-indexed
                  (fn [i data]
                    [:option {:value i}
-                    (str "レベル" (data :level))])
+                    (if (= i 0)
+                      "追加なし"
+                      (str "レベル" (data :level) "相当"))])
                  @high-lv-data))]]
         (into [:div.w-100]
               (for [[_ name] items]

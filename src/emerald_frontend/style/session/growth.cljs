@@ -7,12 +7,25 @@
   (g/css
    [:#growth
     [:.grid-container
-     {:display "grid"
+     {:display               "grid"
       :grid-template-columns "1fr"
-      :grid-template-rows "3fr 8fr"
-      :gap (str (vw 1) " " (vw 1))
-      :grid-template-areas (pr-str "upper"
-                                   "lower")}]
+      :grid-template-rows    "3fr 8fr"
+      :gap                   (str (vw 1) " " (vw 1))
+      :grid-template-areas   (pr-str "upper"
+                                     "lower")}]
     [:.upper {:grid-area "upper"}]
     [:.lower {:grid-area "lower"}]
+    ]
+   [:#skill-acquisition
+    [:.grid-container
+     {:display               "grid"
+      :grid-template-columns "1fr"
+      :grid-template-rows    (str (vw 8) " 5fr 2fr")
+      :gap                   (str (vw 1) " " (vw 1))
+      :grid-template-areas   (pr-str "tab"
+                                     "list"
+                                     "description")}]
+    [:.tab {:grid-area "tab"}]
+    [:.list {:grid-area "list"}]
+    [:.description {:grid-area "description"}]
     ]))

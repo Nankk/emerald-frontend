@@ -12,18 +12,21 @@
             [reagent.core :as reagent]
             [emerald-frontend.components.list :as list]))
 
-(defn screen [char]
-  [:div.screen
-   [:div.w-100.h-100
-    [:img.screen-image {:src "img/dev/dragon-wars.png"}]]])
+(defn screen []
+  (when-let [char @(rf/subscribe [::subs/cur-char])]
+    [:div.screen
+     [:div.vstack-vcenter-hcenter.w-100.h-100.font-size-5
+      [:div.mb-4 "セッションに参加していません"]
+      [:button.nes-btn.is-primary
+       "参加する！"]]]))
 
-(defn title [char]
+(defn title []
   [:div.title.font-size-5.w-100.h-100
-   [:div.vstack-hcenter.w-100.h-100
+   [:div.w-100.h-100.px-5.pt-3
     [:div "Emerald"]
     [:div "aaa"]]])
 
-(defn command [char]
+(defn command []
   [:div.command
    [:div.base-container-full.font-size-4
     (let [icon-size (vw 5)
@@ -35,7 +38,7 @@
                      ["つよさ" #(panel/show-modal :player/show-status)]]]
       (into [:div.vstack]
             (for [c choices]
-              [:div.hstack-vcenter {:style {:margin gap} :on-click (c 1)}
+              [:a.hstack-vcenter {:style {:margin gap} :on-click (c 1)}
                [:img {:style {:margin-right gap-icon :width icon-size :height icon-size}}]
                [:div (c 0)]])))]])
 
@@ -55,43 +58,69 @@
 (def lv-uppable-notifier
   (let [exp-table (reagent/atom nil)]
     (go (reset! exp-table (:body (<! (http/<get-data "/tables/exp")))))
-    (fn [char]
-      (when (and @exp-table
-                 (or (params-upgradable? char)
-                     (ability-upgradable? char @exp-table)))
-        [:div.position-absolute.bounce.font-size-5
-         {:style {:padding          (str "0 " (vw 1))
-                  :top              0
-                  :left             0
-                  :background-color "rgba(30, 70, 140, 0.5)"}}
-         "UP⇧"]))))
+    (fn []
+      (when-let [char @(rf/subscribe [::subs/cur-char])]
+        (when (and @exp-table
+                   (or (params-upgradable? char)
+                       (ability-upgradable? char @exp-table)))
+          [:div.position-absolute.bounce.font-size-5
+           {:style {:padding          (str "0 " (vw 1))
+                    :top              0
+                    :left             0
+                    :background-color "rgba(30, 70, 140, 0.5)"}}
+           "UP⬆"])))))
 
-(defn status-summary [char char-idx]
-  (let [{{{:keys [first middle last]} :name}       :personality
-         {:keys [level max-hp hp max-mp mp g exp]} :status} char]
-    [:div.status-summary.font-size-3
-     [:div.base-container-full
-      [:div.hstack-vcenter.w-100.h-100.position-relative
-       [lv-uppable-notifier char]
-       [:img.profile-image
-        {:src      (str const/server-url "/characters/" char-idx "/image")
-         :style    {:width (vw 10) :height (vw 10)}
-         :on-click #(panel/show-modal :player/growth)}]
-       [:div.vstack-justify
-        [:div.pb-3 (str first " " middle " " last)]
-        [:table.nes-table.is-dark
-         [:tbody
-          [:tr [:td "Lv"] [:td level] [:td ""] [:td ""]]
-          [:tr [:td "HP"] [:td (str hp "/" max-hp)] [:td "G"] [:td g]]
-          [:tr [:td "MP"] [:td (str mp "/" max-mp)] [:td "Exp"] [:td (:free exp)]]]]]]]]))
+(defn status-summary []
+  (when-let [char @(rf/subscribe [::subs/cur-char])]
+    (let [idx (char :idx)
+          {{{:keys [first middle last]} :name}       :personality
+           {:keys [level max-hp hp max-mp mp g exp]} :status} char]
+      [:div.status-summary.font-size-3
+       [:div.base-container-full
+        [:div.hstack-vcenter.w-100.h-100
+         [:a.position-relative
+          {:on-click #(panel/show-modal :player/growth)}
+          [lv-uppable-notifier]
+          [:img.profile-image
+           {:src      (str const/server-url "/characters/" idx "/image")
+            :style    {:width (vw 10) :height (vw 10)}}]]
+         [:div.vstack-justify
+          [:div.pb-3 (str first " " middle " " last)]
+          [:table.nes-table.is-dark
+           [:tbody
+            [:tr [:td "Lv"] [:td level] [:td ""] [:td ""]]
+            [:tr [:td "HP"] [:td (str hp "/" max-hp)] [:td "G"] [:td g]]
+            [:tr [:td "MP"] [:td (str mp "/" max-mp)] [:td "Exp"] [:td (:free exp)]]]]]]]])))
 
-(defn notes [char]
-  [:div.notes.font-size-3
-   [:div.base-container-full.p-3
-    [:div "メモ欄"]
-    [:hr.w-100]
-    [:div "クソゲーRTA、はっじまっるよー！"]
-    [:div "まずはキャラ作成からです！"]]])
+(defn nature->str [nature]
+  (let [{{b-abst :abstract b-detail :detail}                                 :born
+         {{ie-abst :abstract ie-detail :detail} :event
+          {ih-abst :abstract}                   :happening}        :infancy
+         {{ce-abst :abstract ce-detail :detail} :event
+          {ch-abst :abstract}                   :happening}        :childhood
+         {{ae-abst :abstract ae-detail :detail} :event
+          {ar-abst :abstract}                   :departure-reason} :adolescence} nature]
+    (str "生まれ：" b-abst "\n"
+         b-detail "\n\n"
+         "幼少期の経験：" ie-abst "\n"
+         "" ie-detail "\n\n"
+         "幼少期のハプニング：" ih-abst "\n\n"
+         "少年期の経験：" ce-abst "\n"
+         "" ce-detail "\n\n"
+         "少年期のハプニング：" ch-abst "\n\n"
+         "青年期の経験：" ae-abst "\n"
+         "" ae-detail "\n\n"
+         "冒険に出た理由：" ar-abst "\n")))
+
+(defn notes []
+  (when-let [char @(rf/subscribe [::subs/cur-char])]
+    (let [{{:keys [notes nature]} :options} char]
+      [:div.notes.font-size-2
+       [:div.base-container-full.p-3
+        [:div "メモ欄"]
+        [:hr.w-100]
+        [:textarea.is-dark.border-0.pt-3.w-100.vh-10
+         {:default-value (nature->str (-> char :options :nature))}]]])))
 
 (defn settings []
   [:div.base-container {:style {:width (vw 33) :height (vw 40)}}
@@ -106,30 +135,30 @@
     :choices [{:text "はい" :on-click #(rf/dispatch-sync [::events/move-panel-to :home])}
               {:text "いいえ" :on-click #(panel/close-modal :player/exit)}]]])
 
-(defn panels [char char-idx]
-  [:div.w-100.h-100 {:style {:position "relative"}}
-   [:div#player-home.w-100.h-100
-    [:div.grid-container.w-100.h-100.font-size-2
-     [screen char]
-     [title char]
-     [command char]
-     [status-summary char char-idx]
-     [notes char]]]
-   [:div.font-size-4
-    [:div {:on-click #(panel/show-modal :player/exit)}
-     [:i.fas.fa-sign-out-alt {:style {:position "absolute" :top (vw 1.5) :left (vw 93)}}]]
-    [:div {:on-click #(panel/show-modal :player/settings)}
-     [:i.fas.fa-cog {:style {:position "absolute" :top (vw 1.5) :left (vw 96)}}]]]
-   [panel/modal :player/show-status [(vw 3) (vw 5)] [status/main char char-idx]]
-   [panel/modal :player/exit [(vw 2) (vw 70)] [exit]]
-   [panel/modal :player/settings [(vw 2) (vw 60)] [settings]]
-   ])
+(defn panels []
+  (when-let [char @(rf/subscribe [::subs/cur-char])]
+    [:div.w-100.h-100 {:style {:position "relative"}}
+     [:div#player-home.w-100.h-100
+      [:div.grid-container.w-100.h-100.font-size-2
+       [screen]
+       [title]
+       [command]
+       [status-summary]
+       [notes]]]
+     [:div.font-size-4
+      [:div {:on-click #(panel/show-modal :player/exit)}
+       [:i.fas.fa-sign-out-alt {:style {:position "absolute" :top (vw 1.5) :left (vw 93)}}]]
+      [:div {:on-click #(panel/show-modal :player/settings)}
+       [:i.fas.fa-cog {:style {:position "absolute" :top (vw 1.5) :left (vw 96)}}]]]
+     [panel/modal :player/show-status [(vw 3) (vw 5)] [status/main]]
+     [panel/modal :player/exit [(vw 2) (vw 70)] [exit]]
+     [panel/modal :player/settings [(vw 2) (vw 60)] [settings]]
+     ]))
 
 (defn main []
-  (let [char     @(rf/subscribe [::subs/cur-char])
-        idx @(rf/subscribe [::subs/cur-char-idx])]
-    [growth/main char]
-    ;; [:div.w-100.h-100
-    ;;  [panels char idx]
-    ;;  [panel/modal :player/growth [(vw 3) (vw 4.5)] [growth/main char idx]]]
+  (let []
+    [:div.w-100.h-100
+     [panels]
+     [panel/modal :player/growth [(vw 3) (vw 4.5)] [growth/main]]]
+    #_[growth/main]
     ))

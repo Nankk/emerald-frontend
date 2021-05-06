@@ -106,7 +106,17 @@
   [[:.nes-container.is-rounded {:margin  "0px"
                                 :padding (vw 1)}]
    [:label {:margin "0px"}]
-   [:input :.nes-input :.is-dark {:padding (str "0 " (vw 1))}]])
+   [:input :.nes-input :.is-dark {:padding (str "0 " (vw 1))}]
+   [:.nes-btn {:font-size (vw 2.0)
+               :vertical-align "middle"
+               :text-align "center"
+               :height "auto"
+               :padding (str (vw 0.5) (vw 0.8))}]
+   [:.nes-btn.is-small {:font-size (vw 1.5)
+                        :vertical-align "middle"
+                        :text-align "center"
+                        :height "auto"
+                        :padding (str (vw 0.3) (vw 0.5))}]])
 
 (defn auxiliaries []
   [[:hr {:width            "100%"
@@ -127,7 +137,10 @@
    [:.screen-image {:object-fit       "contain"
                     :background-color "#000000"
                     :width            "100%"
-                    :height           "100%"}]])
+                    :height           "100%"}]
+   [:textarea.is-dark {:resize "none"
+                       :background-color "#212529"
+                       :color "#FFFFFF"}]])
 
 (defn animations []
   [;; Bounce
@@ -139,21 +152,21 @@
           [[(keyword (str "." name)) {:animation (str name " 1s infinite")}]
            (at-keyframes
             name
-            [:0% {:transform       (str "translateY(" (vw (- (/ amplitude 2))) ")")
-                  :timing-function "ease-in"}]
-            [:50% {:transform       (str "translateY(" (vw (/ amplitude 2)) ")")
-                   :timing-function "ease-out"}]
+            [:0% {:transform                 (str "translateY(" (vw (- (/ amplitude 2))) ")")
+                  :animation-timing-function "ease-in"}]
+            [:50% {:transform                 (str "translateY(" (vw (/ amplitude 2)) ")")
+                   :animation-timing-function "ease-out"}]
             [:100% {:transform (str "translateY(" (vw (- (/ amplitude 2))) ")")}])]))
    ;; Transition
-   (for [[dir from to]  [["up" 56 0]
-                         ["down" -56 0]
-                         ["right" -100 0]
-                         ["left" 100 0]]
-         type ["in" "out"]
-         :let [name (str dir "-" type)
-               xy   (if (or (= dir "up") (= dir "down")) "Y" "X")]]
+   (for [[dir from to] [["up" 56 0]
+                        ["down" -56 0]
+                        ["right" -100 0]
+                        ["left" 100 0]]
+         type          ["in" "out"]
+         :let          [name (str dir "-" type)
+                        xy   (if (or (= dir "up") (= dir "down")) "Y" "X")]]
      [[(keyword (str "." name)) {:visibility (if (= type "out") "hidden" "visible")
-                                 :animation (str name " 0.5s linear 0s")}]
+                                 :animation  (str name " 0.5s linear 0s")}]
       (at-keyframes
        name
        [:0% {:visibility "visible"
@@ -162,9 +175,15 @@
        [:100% {:transform
                (str "translate" xy "(" (if (= type "in") to (- from)) "vw)")}])])
    ;; Fade in & out
-   (for [[speed time] [["-fast" 0.5] ["" 1.0] ["-slow" 1.5]]]
+   (for [[speed time] [["-fastest" 0.15]
+                       ["-faster" 0.25]
+                       ["-fast" 0.5]
+                       ["" 1.0]
+                       ["-slow" 1.5]
+                       ["-slower" 2.0]
+                       ["-slowest" 3.0]]]
      [[(keyword (str ".fade-in" speed)) {:animation (str "fade-in " time "s linear")}]
-      [(keyword (str ".fade-out" speed)) {:opacity 0
+      [(keyword (str ".fade-out" speed)) {:opacity   0
                                           :transform (str "translateY(" (vw 56) ")")
                                           :animation (str "fade-out " time "s linear")}]])
    (at-keyframes "fade-in"
