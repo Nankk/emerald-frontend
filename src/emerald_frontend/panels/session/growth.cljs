@@ -107,7 +107,6 @@
                   exp-table    @exp-table]
         (let [abl-list const/abilities
               cur-lvs  (:abilities char)]
-          (println cur-lvs)
           [:div.base-container.hstack.h-100
            ;; Header
            [:div.border-right.px-3.mr-3.h-100
@@ -211,24 +210,24 @@
    :magic   "魔法系"
    :other   "その他技能系"})
 
-(defn magical-acquirable? []
-  true
-  #_(let [magi-abl-names (map :name (filter
-                                     #(get-in % [:category :magician])
-                                     const/abilities))]
-      (case (first abilities)
-        "魔法使い系技能2種"
-        (>= 2 (count
-               (filter (fn [[name lv]]
-                         (and (some #{name} magi-abl-names)
-                              (>= lv req-lv)))
-                       (-> char :abilities keys))))
-        "魔法使い系技能"
-        (>= 1 (count
-               (filter (fn [[name lv]]
-                         (and (some #{name} magi-abl-names)
-                              (>= lv req-lv)))
-                       (-> char :abilities keys)))))))
+(defn magical-acquirable? [char {:keys [req-lv abilities] :as skill}]
+  (let [magi-abl-names (map :name (filter
+                                   #(get-in % [:category :magician])
+                                   const/abilities))]
+    (some
+     true?
+     (for [ability abilities]
+       (let [num          (js/parseInt (second (or (re-find #"([0-9]+)種" ability) [nil "1"])))
+             matures      (filter (fn [[key lv]]
+                                    (and (some #{(name key)} magi-abl-names)
+                                         (>= lv req-lv)))
+                                  (-> char :abilities))
+             mature-count (count
+                           (filter (fn [[key lv]]
+                                     (and (some #{(name key)} magi-abl-names)
+                                          (>= lv req-lv)))
+                                   (-> char :abilities)))]
+         (>= mature-count num))))))
 
 (defn acquirable? [char skill]
   (let [{:keys [req-lv dependents replace abilities]} skill
@@ -240,102 +239,115 @@
          ;; Ability check (special treatment for "one of magical skills")
          (if-not (empty? abilities)
            (if (some #(re-find #"魔法使い系" %) abilities)
-             (magical-acquirable?)
-             (every? #(>= (get-in char [:abilities %]) req-lv) abilities))
+             (magical-acquirable? char skill)
+             (every? #(>= (get-in char [:abilities (keyword %)]) req-lv) abilities))
            true))))
 
+(def c {:skills {:general {:manual ["魔力強化I"]}}
+        :abilities {:ソーサラー 10
+                    ;; :コンジャラー 9
+                    }
+        :status {:level 10}})
+(def s (first (filter #(= (% :name) "魔力強化I") @skills-table)))
+(acquirable? c s)
+
+(defn skill-acquisition-tab [char cur-type available-only?]
+  (let [x-pos   (atom 0)
+        x-shift (util.js/vw 15)]
+    [:div.tab
+     [:div.hstack-vcenter
+      [:div.vw-10.text-center "カテゴリ"]
+      [:div.hstack-justify-vcenter {:style {:width (vw 37)}}
+       [:div {:on-click (fn []
+                          (swap! x-pos #(max 0 (- % x-shift)))
+                          (.scrollTo (by-id "tabs") @x-pos 0))} "◀"]
+       (into
+        [:div#tabs.hstack.flex-nowrap.overflow-hidden {:style {:width (vw 30)}}]
+        (for [[k s] skill-type->str]
+          [:div.base-container.text-nowrap
+           (when (not= k @cur-type)
+             {:class    "border-0"
+              :on-click #(reset! cur-type k)})
+           s]))
+       [:div {:on-click (fn []
+                          (swap! x-pos #(min (-> (by-id "tabs") .-scrollWidth) (+ % x-shift)))
+                          (.scrollTo (by-id "tabs") @x-pos 0))} "▶"]]]
+     [:div.hstack-vcenter-justify.px-3
+      [:div]
+      [checkbox {:checked  true
+                 :on-click #(swap! available-only? not)}
+       [:div.font-size-3 "習得可能な技能のみ表示"]]]]))
+
+(defn skill-acquisition-list [char cur-type cur-skill available-only?]
+  (into
+   [:div.vstack.list.h-100.overflow-auto]
+   (for [skill (->> @skills-table
+                    (filter #(and (some #{(name @cur-type)} (% :categories)) (not (% :auto?))) ,,))]
+     ;; Each skill
+     [:div.base-container.hstack-justify
+      {:on-click #(reset! cur-skill skill)
+       :style
+       {:border-radius    (vw 1)
+        :background-color (when (= (get @cur-skill :name) (skill :name)) "#306088")
+        :opacity          (when-not (acquirable? char skill) 0.5)
+        :display          (when (or (some #{(skill :name)}
+                                          (get-in char [:skills :general :manual]))
+                                    (and @available-only?
+                                         (not (acquirable? char skill)))) "none")}}
+      [:div (skill :name)]])))
+
+(defn skill-acquisition-bottom [char cur-skill]
+  [:div.description.font-size-3
+   [:hr]
+   [:div.hstack-justify.p-3.h-100
+    ;; Description
+    [:div.overflow-auto {:style {:width  (vw 37)
+                                 :height (vw 8.9)}}
+     (when-let [{:keys [req-lv dependents replace abilities]} @cur-skill]
+       [:div
+        [:div (str "《" (get @cur-skill :name) "》")]
+        [:div.pb-2 (get @cur-skill :abstract)]
+        [:div.font-size-2 {:style {:color "#aaa"}}
+         [:div
+          (str  "必要："
+                (when abilities
+                  (str/replace (str/join "、" abilities)
+                               #"、([^、]+$)"
+                               #(str "、または" (%1 1))))
+                " Lv " req-lv)]
+         [:div (when (or dependents replace)
+                 (str
+                  "前提特技："
+                  (str/replace (str/join "、" (filter some? (cons replace dependents)))
+                               #"、([^、]+$)"
+                               #(str "、または" (%1 1)))))]]])]
+    ;; Determine
+    [:div.hstack-vcenter-hcenter.h-100 {:style {:min-width (vw 8)}}
+     [:button.nes-btn.is-primary.text-nowrap
+      {:class    (when (or (not @cur-skill)
+                           (not (acquirable? char @cur-skill))) "is-disabled")
+       :on-click (fn []
+                   (<update-char
+                    (update-in char [:skills :general :manual] conj (@cur-skill :name))
+                    (char :idx)
+                    {:wait-message "通信中…"})
+                   (panel/close-modal :growth/skill-acquisition))}
+      "決定"]]]])
+
 (def skill-acquisition
-  (let [cur-type        (reagent/atom :attack)
+  (let [cur-type        (reagent/atom :master)
         cur-skill       (reagent/atom nil)
-        available-only? (reagent/atom true)
-        x-pos           (atom 0)
-        x-shift         (util.js/vw 5)]
+        available-only? (reagent/atom true)]
+    (def cs @cur-skill)
     (fn []
       (when-let [char @(rf/subscribe [::subs/cur-char])]
         [:div#skill-acquisition.base-container.font-size-4
          {:style {:width  (vw 50)
                   :height (vw 50)}}
          [:div.grid-container.h-100
-          [:div.tab
-           ;; Menu
-           [:div.hstack-vcenter
-            [:div.vw-10.text-center "カテゴリ"]
-            [:div.hstack-justify-vcenter {:style {:width (vw 37)}}
-             [:div {:on-click (fn []
-                                (swap! x-pos #(max 0 (- % x-shift)))
-                                (.scrollTo (by-id "tabs") @x-pos 0))} "◀"]
-             (into
-              [:div#tabs.hstack.flex-nowrap.overflow-hidden {:style {:width (vw 30)}}]
-              (for [[k s] skill-type->str]
-                [:div.base-container.text-nowrap
-                 (when (not= k @cur-type)
-                   {:class    "border-0"
-                    :on-click #(reset! cur-type k)})
-                 s]))
-             [:div {:on-click (fn []
-                                (swap! x-pos #(min (-> (by-id "tabs") .-clientWidth) (+ x-shift)))
-                                (.scrollTo (by-id "tabs") @x-pos 0))} "▶"]]]
-           [:div.hstack-vcenter-justify.px-3
-            [:div]
-            [checkbox {:checked  true
-                       :on-click #(swap! available-only? not)}
-             [:div.font-size-3 "習得可能な技能のみ表示"]]]]
-          ;; List
-          (into
-           [:div.vstack.list.h-100.overflow-auto]
-           (for [skill (->> @skills-table
-                            (filter #(and (some #{(name @cur-type)} (% :categories)) (not (% :auto?))) ,,))]
-             ;; Each skill
-             [:div.base-container.hstack-justify
-              {:on-click #(reset! cur-skill skill)
-               :style    {:border-radius (vw 1)
-                          :background-color
-                          (when (= (get @cur-skill :name) (skill :name)) "#306088")
-                          :opacity       (when-not (acquirable? char skill) 0.5)
-                          :display       (when (or (some #{(skill :name)}
-                                                         (get-in char [:skills :general :manual]))
-                                                   (and @available-only?
-                                                        (not (acquirable? char skill)))) "none")}}
-              [:div (skill :name)]]))
-          ;; Bottom
-          [:div.description.font-size-3
-           [:hr]
-           [:div.hstack-justify.p-3.h-100
-            ;; Description
-            [:div.overflow-auto {:style {:width  (vw 37)
-                                         :height (vw 8.9)}}
-             (when-let [{:keys [req-lv dependents replace abilities]} @cur-skill]
-               [:div
-                [:div (str "《" (get @cur-skill :name) "》")]
-                [:div.pb-2 (get @cur-skill :abstract)]
-                [:div.font-size-2 {:style {:color "#aaa"}}
-                 [:div
-                  (str  "必要："
-                        (when abilities
-                          (str/replace
-                           (str/join "、" abilities)
-                           #"、([^、]+$)"
-                           #(str "、または" (%1 1))))
-                        " Lv " req-lv)]
-                 [:div (when (or dependents replace)
-                         (str
-                          "前提特技："
-                          (str/replace
-                           (str/join "、" (filter some? (cons replace dependents)))
-                           #"、([^、]+$)"
-                           #(str "、または" (%1 1)))))]]])]
-            ;; Determine
-            [:div.hstack-vcenter-hcenter.h-100 {:style {:min-width (vw 8)}}
-             [:button.nes-btn.is-primary.text-nowrap
-              {:class    (when (or (not @cur-skill)
-                                   (not (acquirable? char @cur-skill))) "is-disabled")
-               :on-click (fn []
-                           (<update-char
-                            (update-in char [:skills :general :manual] conj (@cur-skill :name))
-                            (char :idx)
-                            {:wait-message "通信中…"})
-                           (panel/close-modal :growth/skill-acquisition))}
-              "決定"]]]]]]))))
+          [skill-acquisition-tab char cur-type available-only?]
+          [skill-acquisition-list char cur-type cur-skill available-only?]
+          [skill-acquisition-bottom char cur-skill]]]))))
 
 (def ability-up
   (let []
