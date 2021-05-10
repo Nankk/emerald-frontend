@@ -47,7 +47,7 @@
    [:div.overflow-auto.w-100.h-100
     (into [:div] (for [summary (sort-by :idx @*characters-summary)]
                    ^{:key (summary :uuid)}
-                   [:div
+                   [:a
                     {:on-click
                      (fn []
                        (rf/dispatch-sync [::events/set-cur-char-idx (summary :idx)])

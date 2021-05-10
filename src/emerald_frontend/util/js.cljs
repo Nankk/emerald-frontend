@@ -16,4 +16,4 @@
   [fraction]
   (let [w @(rf/subscribe [::subs/panel-width])
         h @(rf/subscribe [::subs/panel-height])]
-    (* fraction (min w (/ (* h (css/aspect-ratio 0)) (css/aspect-ratio 1))))))
+    (* (/ fraction 100) (min w (/ (* h (css/aspect-ratio 0)) (css/aspect-ratio 1))))))

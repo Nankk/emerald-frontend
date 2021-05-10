@@ -165,9 +165,6 @@
          (when or?
            (str "（" (when oral "会話") (when both? "、") (when literal "読文") "）")))))
 
-(def magical-abilities
-  ["ソーサラー" "コンジャラー" "プリースト" "マギテック" "フェアリーテイマー" "デーモンルーラー" "ドルイド"])
-
 (def abilities
   [{:name "ファイター" :category #{:warrior :cqc} :table :a}
    {:name "グラップラー" :category #{:warrior :cqc} :table :a}
