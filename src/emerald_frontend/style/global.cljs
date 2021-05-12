@@ -22,7 +22,7 @@
           (* (Math/pow (/ (- i (first steps)) (- (last steps) (first steps))) n)
              (- max min)))])))
 
-(defn outermost []
+(defn global []
   [[:html {:height    "100%"
            :width     "100%"
            :font-size (vw 4.5)
@@ -33,7 +33,8 @@
            :color            (c/base 7)}]
    [:#app {:height           "100%"
            :width            "100%"
-           :background-color (c/base 1)}]])
+           :background-color (c/base 1)}]
+   [:div {:user-select "none"}]])
 
 (def nes-container-dark
   {:border-style "solid"
@@ -196,7 +197,7 @@
 
 (defn css []
   (g/css
-   (outermost)
+   (global)
    (containers)
    (font-size)
    (margins-and-paddings)
