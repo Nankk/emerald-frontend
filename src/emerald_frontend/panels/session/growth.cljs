@@ -49,6 +49,83 @@
            [:tr [:td "MP"] [:td (str mp "/" max-mp)]]
            [:tr [:td "Exp"] [:td (:free exp)]]]]]]])))
 
+(defn move-elem [coll idx diff]
+  (let [from-v (get coll idx)
+        to     (min (max 0 (+ idx diff)) (dec (count coll)))
+        to-v   (get coll to)]
+    (assoc coll idx to-v to from-v)))
+
+(def param-probabilities
+  (map #(/ % 21) (reverse (map inc (range 6)))))
+
+(defn growth-counts [ordered-param-keys achievements]
+  (def achievements 6)
+  (def ordered-param-keys [:dex :agi :int :pow :str :con])
+  (let [growths              (vec (map #(Math/round (* achievements %)) param-probabilities))
+        diff                 (- achievements (reduce + growths))
+        growths-fraction-rev
+        (case diff
+          0  growths
+          1  (let [min-add (apply min growths)
+                   add-idx (first (keep-indexed #(when (= %2 min-add) %1) growths))]
+               (update growths add-idx inc))
+          -1 (let [min-sub (apply #(min 1 %) growths)
+                   sub-idx (last (keep-indexed #(when (= %2 min-sub) %1) growths))]
+               (update growths sub-idx dec))
+          (throw (js/Error. "Erroneous fraction: " diff)))]
+    (zipmap ordered-param-keys growths-fraction-rev)))
+
+(def params-up-at-once
+  (let [params    (reagent/atom (vec (keys param-key->str)))
+        cur-param (reagent/atom (first @params))]
+    (fn []
+      (when-let [char @(rf/subscribe [::subs/cur-char])]
+        [:div.base-container.hstack-justify.vw-70.vh-40
+         [:div.hstack
+          (into [:div.base-container.vw-25.h-100]
+                (for [param @params]
+                  [:div.base-container
+                   (merge {:on-click #(reset! cur-param param)}
+                          (when (= param @cur-param)
+                            {:style {:border-radius (vw 1)
+                                     :background-color "#306088"}}))
+                   (param-key->str param)]))
+          [:div
+           [:div.base-container
+            {:on-click (fn []
+                         (swap! params
+                                (fn [ps]
+                                  (let [idx (first (keep-indexed #(when (= %2 @cur-param) %1) ps))]
+                                    (move-elem ps idx -1)))))}
+            "▲"]
+           [:div.base-container
+            {:on-click (fn []
+                         (swap! params
+                                (fn [ps]
+                                  (let [idx (first (keep-indexed #(when (= %2 @cur-param) %1) ps))]
+                                    (move-elem ps idx 1)))))}
+            "▼"]]]
+         [:div.vstack-justify.vw-35.h-100
+          [:div
+           [:div.text-center.font-size-5.py-4 "自動成長割り振り"]
+           [:div "優先的に成長させたいパラメータが上に来るように並べ替えてください。"]
+           [:div "確率に基づいて分配されます。"]]
+          [:div.hstack-justify
+           [:div]
+           [:a.nes-btn.is-primary
+            {:style {:width (vw 10)}
+             :on-click
+             (fn []
+               (let [growths (growth-counts @params (get-in char [:status :achievements :free]))]
+                 (<update-char
+                  (-> char
+                      (update-in ,, [:parameters :growth] #(merge-with + % growths))
+                      (assoc-in ,, [:status :achievements :used]
+                                   (get-in char [:status :achievements :total])))
+                  (char :idx))
+                 (panel/close-modal :growth/params-up-at-once)))}
+            "確定"]]]]))))
+
 (def parameter-upgrader
   (let [buffed? (reagent/atom true)]
     (fn []
@@ -77,17 +154,23 @@
             ;; Upgrade button
             (let [upgrade-rest (get-in char [:status :achievements :free])
                   upgradable?  (not= upgrade-rest 0)]
-              [:button.nes-btn.is-primary
-               {:class (if upgradable?
-                         "bounce-p"
-                         "is-disabled")
-                :on-click #(when upgradable?
-                             (panel/show-modal :growth/params-up))}
-               [:div "成長"]
-               [:div.font-size-3 {:style {:width (vw 9)}}
-                (if (pos? upgrade-rest)
-                  (str "あと" upgrade-rest "回")
-                  "できません")]])]])))))
+              [:div
+               [:a.nes-btn.is-primary
+                {:class    (if upgradable?
+                             "bounce-p"
+                             "is-disabled")
+                 :on-click #(when upgradable? (panel/show-modal :growth/params-up))}
+                [:div "成長"]
+                [:div.font-size-3 {:style {:width (vw 9)}}
+                 (if (pos? upgrade-rest)
+                   (str "あと" upgrade-rest "回")
+                   "できません")]]
+               (when upgradable?
+                 [:a.text-center.d-block.mt-2.font-size-2
+                  {:on-click #(panel/show-modal :growth/params-up-at-once)
+                   :style {:background-color "rgba(0, 0, 0, 0.5)"
+                           :color            "#209cee"}}
+                  "一括で振り分ける？"])])]])))))
 
 (defonce cur-ability (reagent/atom nil))
 
@@ -194,8 +277,7 @@
                                 (-> char
                                     (update-in ,, [:parameters :growth (str->param-key c)] inc)
                                     (update-in ,, [:status :achievements :used] inc))
-                                (char :idx)
-                                {:wait-message "通信中…"})
+                                (char :idx))
                                (panel/close-modal :growth/params-up)
                                (reset! targets nil))})
                          [{:text     "やめる"
@@ -242,14 +324,6 @@
              (magical-acquirable? char skill)
              (every? #(>= (get-in char [:abilities (keyword %)]) req-lv) abilities))
            true))))
-
-(def c {:skills {:general {:manual ["魔力強化I"]}}
-        :abilities {:ソーサラー 10
-                    ;; :コンジャラー 9
-                    }
-        :status {:level 10}})
-(def s (first (filter #(= (% :name) "魔力強化I") @skills-table)))
-(acquirable? c s)
 
 (defn skill-acquisition-tab [char cur-type available-only?]
   (let [x-pos   (atom 0)
@@ -329,8 +403,7 @@
        :on-click (fn []
                    (<update-char
                     (update-in char [:skills :general :manual] conj (@cur-skill :name))
-                    (char :idx)
-                    {:wait-message "通信中…"})
+                    (char :idx))
                    (panel/close-modal :growth/skill-acquisition))}
       "決定"]]]])
 
@@ -384,12 +457,13 @@
 (defn main []
   [:div
    [container]
-   [panel/modal :growth/params-up [(vw 10) (vw 70)] [params-up]]
+   [panel/modal :growth/params-up [(vw 10) (vw 65)] [params-up]]
+   [panel/modal :growth/params-up-at-once [(vw 8) (vw 14)] [params-up-at-once]]
    [panel/modal :growth/ability-up [(vw 14) (vw 24)] [ability-up]]
    [panel/modal :growth/skill-acquisition [(vw 2) (vw 25)]
     {:backdropper-rigid? true}
     [skill-acquisition]]]
-  #_[skill-acquisition])
+  #_[params-up-at-once])
 
 (comment
   ;; For px-style css conversion to zoomable (development only)

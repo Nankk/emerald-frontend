@@ -8,8 +8,9 @@
    ))
 
 (defan <update-char [char idx & [options]]
-  (let [pre-char        @(rf/subscribe [::subs/cur-char])
-        opts-default    {:wait? true}
+  (let [pre-char               @(rf/subscribe [::subs/cur-char])
+        opts-default           {:wait?        true
+                                :wait-message "通信中…"}
         {:keys [wait?
                 wait-message]} (merge opts-default options)]
     (try
