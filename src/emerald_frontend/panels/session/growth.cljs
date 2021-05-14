@@ -312,12 +312,11 @@
          (>= mature-count num))))))
 
 (defn acquirable? [char skill]
-  (let [{:keys [req-lv dependents replace abilities]} skill
+  (let [{:keys [req-lv dependents abilities]} skill
         {{{:keys [manual auto]} :general} :skills}    char
         existing-skills                               (concat (or manual []) (or auto []))]
     (and (>= (-> char :status :level) req-lv)
          (if-not (empty? dependents) (every? #(some #{%} existing-skills) dependents) true)
-         (if replace (some #{replace} existing-skills) true)
          ;; Ability check (special treatment for "one of magical skills")
          (if-not (empty? abilities)
            (if (some #(re-find #"魔法使い系" %) abilities)
@@ -356,7 +355,9 @@
   (into
    [:div.vstack.list.h-100.overflow-auto]
    (for [skill (->> @skills-table
-                    (filter #(and (some #{(name @cur-type)} (% :categories)) (not (% :auto?))) ,,))]
+                    (filter #(and (some #{(name @cur-type)} (% :categories))
+                                  (not (% :auto?))
+                                  (not (% :replace))) ,,))]
      ;; Each skill
      [:div.base-container.hstack-justify
       {:on-click #(reset! cur-skill skill)
@@ -377,7 +378,7 @@
     ;; Description
     [:div.overflow-auto {:style {:width  (vw 37)
                                  :height (vw 8.9)}}
-     (when-let [{:keys [req-lv dependents replace abilities]} @cur-skill]
+     (when-let [{:keys [req-lv dependents abilities]} @cur-skill]
        [:div
         [:div (str "《" (get @cur-skill :name) "》")]
         [:div.pb-2 (get @cur-skill :abstract)]
@@ -389,10 +390,10 @@
                                #"、([^、]+$)"
                                #(str "、または" (%1 1))))
                 " Lv " req-lv)]
-         [:div (when (or dependents replace)
+         [:div (when dependents
                  (str
                   "前提特技："
-                  (str/replace (str/join "、" (filter some? (cons replace dependents)))
+                  (str/replace (str/join "、" (filter some? dependents))
                                #"、([^、]+$)"
                                #(str "、または" (%1 1)))))]]])]
     ;; Determine
