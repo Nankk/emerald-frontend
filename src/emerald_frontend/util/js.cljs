@@ -13,7 +13,7 @@
 
 (defn vw
   "Returns relative width considering current container size."
-  [fraction]
+  [percent]
   (let [w @(rf/subscribe [::subs/panel-width])
         h @(rf/subscribe [::subs/panel-height])]
-    (* (/ fraction 100) (min w (/ (* h (css/aspect-ratio 0)) (css/aspect-ratio 1))))))
+    (* (/ percent 100) (min w (/ (* h (css/aspect-ratio 0)) (css/aspect-ratio 1))))))

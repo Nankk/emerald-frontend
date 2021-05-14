@@ -74,11 +74,12 @@
             [(keyword (str "." dir "stack" (when jabr (str "-" jabr)) (when aabr (str "-" aabr))))
              style])])))])
 
-(defn font-size []
+(defn font []
   ;;  h1-h5 & nonlinear-sizes
   [(for [[lv relwidth] (nonlinear-sizes 1.3 1 5 10)]
      [(keyword (str ".font-size-" lv)) {:font-size (vw relwidth)}])
-   [:p  {:font-size (vw 2.0)}]])
+   [:p  {:font-size (vw 2.0)}]
+   [:.font-error {:color (c/error 0)}]])
 
 (defn margins-and-paddings []
   ;; Margins & paddings override
@@ -109,15 +110,15 @@
    [:label {:margin "0px"}]
    [:input :.nes-input :.is-dark {:padding (str "0 " (vw 1))}]
    [:.nes-btn {:font-size (vw 2.0)
+               :line-height 1
                :vertical-align "middle"
                :text-align "center"
                :height "auto"
                :padding (str (vw 0.5) (vw 0.8))}]
    [:.nes-btn.is-small {:font-size (vw 1.5)
-                        :vertical-align "middle"
-                        :text-align "center"
-                        :height "auto"
-                        :padding (str (vw 0.3) (vw 0.5))}]])
+                        :padding (str (vw 0.5) (vw 0.5))}]
+   [:.nes-btn.is-smaller {:font-size (vw 1.5)
+                          :padding (str (vw 0.2) (vw 0.2))}]])
 
 (defn auxiliaries []
   [[:hr {:width            "100%"
@@ -193,13 +194,17 @@
    (at-keyframes "fade-out"
                  ;; What a miserable, horrifying and NASTY implementation
                  [:0% {:opacity 100 :transform "translateY(0px)"}]
-                 [:100% {:opacity 0 :transform "translateY(0px)"}])])
+                 [:100% {:opacity 0 :transform "translateY(0px)"}])
+   ;; Transitions
+   [:.ease-300 {:transition "all 300ms 0s ease"}]
+   [:.ease-out-300 {:transition "all 300ms 0s ease-out"}]
+   [:.rotate-180 {:transform "rotate(180deg)"}]])
 
 (defn css []
   (g/css
    (global)
    (containers)
-   (font-size)
+   (font)
    (margins-and-paddings)
    (width-and-height)
    (auxiliaries)
