@@ -52,3 +52,13 @@ npx shadow-cljs watch app
     "http://localhost:3000"
     "https://nankk.net/sw-tools-api/v1"))
 #+end_src
+
+** Dockerの使用
+Dockerfileから、Dockerイメージの作成やアプリケーションの起動も行えます。
+
+#+begin_src
+docker build -t sword-world-tools/emerald-frontend . #Dockerイメージの作成
+docker run -it -p [任意のポート番号]:80 --rm --name [任意のコンテナ名] sword-world-tools/emerald-frontend #Dockerイメージからコンテナを起動
+#+end_src
+
+コンテナの起動後、 ~localhost:[任意のポート番号]~ にアクセスすると画面が表示されます。
