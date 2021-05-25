@@ -1,0 +1,26 @@
+image: docker:latest
+services:
+    - docker:dind
+before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+
+check-buildable:
+    # masterブランチpush時に、docker buildができるかどうかを検証しておく
+    only:
+        - master
+    stage: build
+    script:
+        - docker build --pull -t "$CI_REGISTRY_IMAGE" .
+
+register-docker-image:
+    # タグ付与時のみ、gitlab container registryにイメージを登録する
+    only:
+        - tags
+    stage: build
+    script:
+        # Dockerイメージのビルド時に、Gitタグ名に応じたタグも付与する
+        - docker build --pull -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG" .
+        # latestタグも同時に付与する
+        - docker tag "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG" "$CI_REGISTRY_IMAGE:latest"
+        # 全てのタグをpushする
+        - docker push --all-tags "$CI_REGISTRY_IMAGE"
