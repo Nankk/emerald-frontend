@@ -1,10 +1,15 @@
 (ns emerald-frontend.const
-  (:require [emerald-frontend.config :as config]))
+  (:require [emerald-frontend.config :as config]
+            [emerald-frontend.macros.envvar-loader :refer [inline-envvar]]))
 
+(def server-address-env (inline-envvar :emerald-server-host))
+
+;; If environment variable `EMERALD_SERVER_HOST` is set when compilation,
+;; its value (e.g. "https://foo.com/path/to/api", without closing slash) is embedded
+;; into resulting 'app.js' and used as api root.
+;; If not, "http://localhost:3000" is used.
 (def server-url
-  (if config/debug?
-    "http://localhost:3000"
-    "https://nankk.net/sw-tools-api/v1"))
+  (or server-address-env "http://localhost:3000"))
 
 (def upload-image-size-limit 200000)
 
