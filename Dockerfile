@@ -13,6 +13,7 @@ COPY . /app
 RUN shadow-cljs release app
 
 FROM nginx:stable-alpine as production-stage
+COPY run.sh .
 COPY --from=build-stage /app/resources/public /usr/share/nginx/html
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["sh", "run.sh"]

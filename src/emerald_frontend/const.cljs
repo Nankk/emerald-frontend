@@ -9,7 +9,7 @@
 ;; into resulting 'app.js' and used as api root.
 ;; If not, "http://localhost:3000" is used.
 (def server-url
-  (or server-address-env "http://localhost:3000"))
+  (or js/window.SERVER_URL server-address-env "http://localhost:3000"))
 
 (def upload-image-size-limit 200000)
 
