@@ -15,7 +15,9 @@
   [cljs-http "0.1.46"]
   [async-interop "0.1.0"]
   [garden "1.3.9"]
-  [re-com "2.9.0"]]
+  [re-com "2.9.0"]
+  ;; For Clojure
+  [environ "1.2.0"]]
 
  :source-paths
  ["src"
