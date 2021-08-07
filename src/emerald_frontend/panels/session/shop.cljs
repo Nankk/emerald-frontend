@@ -30,9 +30,9 @@
                                            (reset! target-name (x :name)))
                                          x)
                                        @all-items)
-            orig-count  (get-in @char [:items target-uuid :count])
+            orig-count  (get-in @char [:items (keyword target-uuid) :count])
             incr        (* (or quantity 1) count)
-            new-count   (if orig-count (+ orig-count incr) incr)
+            new-count   (+ (or orig-count 0) incr)
             new-item    {:uuid target-uuid :name @target-name :count new-count}]
         (swap! char #(assoc-in % [:items target-uuid] new-item))))
     (<update-char (assoc-in @char [:status :g] rest) (@char :idx))
