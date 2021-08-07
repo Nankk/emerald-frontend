@@ -10,7 +10,8 @@
             [cljs.core.async :refer [<! go]]
             [re-frame.core :as rf]
             [reagent.core :as reagent]
-            [emerald-frontend.components.list :as list]))
+            [emerald-frontend.components.list :as list]
+            [emerald-frontend.panels.session.shop :as shop]))
 
 (defn screen []
   (when-let [char @(rf/subscribe [::subs/cur-char])]
@@ -29,13 +30,14 @@
 (defn command []
   [:div.command
    [:div.base-container-full.font-size-4
-    (let [icon-size (vw 5)
+    (let [icon-size (vw 3)
           gap       (vw 1)
           gap-icon  (vw 1.8)
           choices   [["もちもの" #()]
                      ["まほう" #()]
                      ["そうび" #()]
-                     ["つよさ" #(panel/show-modal :player/show-status)]]]
+                     ["つよさ" #(panel/show-modal :player/show-status)]
+                     ["よろずや" #(panel/show-modal :player/shop)]]]
       (into [:div.vstack]
             (for [c choices]
               [:a.hstack-vcenter {:style {:margin gap} :on-click (c 1)}
@@ -153,12 +155,11 @@
      [panel/modal :player/show-status [(vw 3) (vw 5)] [status/main]]
      [panel/modal :player/exit [(vw 2) (vw 70)] [exit]]
      [panel/modal :player/settings [(vw 2) (vw 60)] [settings]]
+     [panel/modal :player/shop [(vw 2) (vw 2)] [shop/main]]
      ]))
 
 (defn main []
   (let []
-    [:div.w-100.h-100
+    [:div.w-100.h-100.p-4
      [panels]
-     [panel/modal :player/growth [(vw 3) (vw 4.5)] [growth/main]]]
-    #_[growth/main]
-    ))
+     [panel/modal :player/growth [(vw 3) (vw 4.5)] [growth/main]]]))
