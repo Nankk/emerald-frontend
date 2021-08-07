@@ -162,6 +162,4 @@
   (let []
     [:div.w-100.h-100.p-4
      [panels]
-     [panel/modal :player/growth [(vw 3) (vw 4.5)] [growth/main]]]
-    ;; [shop/main]
-    ))
+     [panel/modal :player/growth [(vw 3) (vw 4.5)] [growth/main]]]))

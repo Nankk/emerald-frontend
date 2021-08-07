@@ -97,7 +97,7 @@
    :ability-items       "技能用アイテム"))
 
 (defn tabs [{:keys [all-items cur-shelf ranks-displayed?]}]
-  [:div.font-size-4
+  [:div.font-size-4.vw-35
    [panel/tabs {:header    "商品棚"
                 :items     (vec (for [[k v] shelves] {:key k :value v}))
                 :on-change (fn [prev new] (reset! cur-shelf new))
@@ -150,7 +150,6 @@
     (into [:div.m-2.font-size-3]
           (for [category (categories @cur-shelf)
                 :let     [items (grouped category)]]
-            ;; Somehow redraw behavior changes according to whether parentheses are around or not
             [(panel/accordion
               {:header  [:div.hstack-vcenter
                          [:div.m-3.bg-secondary {:style {:width (vw 3) :height (vw 3)}}

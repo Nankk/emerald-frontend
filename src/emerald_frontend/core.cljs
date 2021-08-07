@@ -32,7 +32,6 @@
         rw    (int (/ (* h (ratio 0)) (ratio 1)))]
     (println "w h rw rh" w h rw rh)
     (rf/dispatch-sync [::events/set-panel-width (min w rw)])
-    ;; TODO: Don't know how to change font size relatively both to vw and to vh
     (rf/dispatch-sync [::events/set-panel-height (min h rh)])))
 
 (defn init []

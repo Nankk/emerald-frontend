@@ -1,9 +1,9 @@
 (ns emerald-frontend.components.panel
   (:require [clojure.walk :as walk]
-            [emerald-frontend.util.css :refer [vw px->vw]]
+            [emerald-frontend.macros.util :as util]
+            [emerald-frontend.util.css :refer [px->vw vw]]
             [emerald-frontend.util.js :as util.js]
-            [reagent.core :as reagent]
-            [emerald-frontend.macros.util :as util]))
+            [reagent.core :as reagent]))
 
 ;;; Test panel ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -49,25 +49,27 @@
 (defn- backdropper [modal-key z-idx rigid?]
   (let [display (get-in @*modal-state [modal-key :display])]
     (println "backdropper-display" display)
-    [:div {:on-click #(when-not rigid? (close-modal modal-key))
-           :style {:display display
-                   :z-index z-idx
-                   :position "absolute"
-                   :top (vw -100)
-                   :left (vw -100)
-                   :width (vw 300)
-                   :height (vw 300)
-                   :background-color "#000000"
-                   :opacity "0.3"}}]))
+    (if (= display "none")
+      [:div {:style {:display "none"}}]
+      [:div {:on-click #(when-not rigid? (close-modal modal-key))
+             :style {:z-index z-idx
+                     :position "absolute"
+                     :top (vw -100)
+                     :left (vw -100)
+                     :width (vw 300)
+                     :height (vw 300)
+                     :background-color "#000000"
+                     :opacity "0.3"}}])))
 
 (defn- modal-body [key [top left] z-idx body]
   (let [display (get-in @*modal-state [key :display])]
-    [:div {:style {:display display
-                   :z-index z-idx
-                   :position "absolute"
-                   :top top
-                   :left left}}
-     body]))
+    (if (= display "none")
+      [:div {:style {:display "none"}}]
+      [:div {:style {:z-index z-idx
+                     :position "absolute"
+                     :top top
+                     :left left}}
+       body])))
 
 (defn modal
   "Make sure to set {:position \"relative\"} to the container of this dialog.
@@ -124,7 +126,7 @@
                                       (.scrollTo (util.js/by-id tab-id) @x-pos 0))} "◀"]
               (when-let [width @tabs-vw]
                 (into
-                 [:div.hstack-vcenter.flex-nowrap.overflow-hidden
+                 [:div.hstack-vcenter.flex-nowrap.overflow-hidden.w-100
                   {:id    tab-id
                    :style {:width width}}]
                  (for [{:keys [key value]} items]
@@ -143,7 +145,11 @@
 
 ;;; Accordion ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn accordion [& [options]]
+(defn accordion
+  "Create accordion panel.
+  **Note** Make sure call this as a function inside a hiccup square bracket
+           when component has reagent atoms inside."
+  [& [options]]
   (let [closed? (reagent/atom true)]
     (fn []
       (let [id             (str (random-uuid))
@@ -172,7 +178,7 @@
              [:div.ease-out-300
               {:on-click #(reset! content-height (px->vw (- (* 1.2 (.-offsetHeight (util.js/by-id id))))))
                :style    {:margin-top (if @content-height
-                                        (when @closed? @content-height)
+                                        (if @closed? @content-height 0)
                                         (vw -200))}}
               [:div {:id id}
                content]]])})))))
