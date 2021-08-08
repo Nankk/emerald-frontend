@@ -5,7 +5,7 @@
             [emerald-frontend.panels.cc-from-nature :as nature]
             [cljs.core.async :refer [<! go]]
             [emerald-frontend.util.http :as http]
-            [emerald-frontend.macros.async :refer [defan defan-]]
+            [emerald-frontend.util.async :refer [go? <?]]
             [reagent.core :as reagent]
             [emerald-frontend.const :as const]
             [emerald-frontend.util.css :refer [vw]]
@@ -16,10 +16,11 @@
 
 (defonce *characters-summary (reagent/atom nil))
 
-(defan- <load-characters-summary []
-  (let [res (<! (http/<get-data "/characters/summary"))]
-    (reset! *characters-summary (res :body))
-    true))
+(defn- <load-characters-summary []
+  (go?
+   (let [res (<? (http/<get-data "/characters/summary"))]
+     (reset! *characters-summary (res :body))
+     true)))
 
 (defn character-summary [summary]
   [:div.base-container
@@ -37,8 +38,8 @@
 
 (defn- reload-cur-char []
   (println "reload-cur-char")
-  (go (let [char (:body (<! (http/<get-data (str "/characters/" @(rf/subscribe [::subs/cur-char-idx])))))]
-        (rf/dispatch-sync [::events/set-cur-char char]))))
+  (go? (let [char (:body (<? (http/<get-data (str "/characters/" @(rf/subscribe [::subs/cur-char-idx])))))]
+         (rf/dispatch-sync [::events/set-cur-char char]))))
 
 (defn- summary-list
   "type :start/:show/:delete"
@@ -79,8 +80,8 @@
                  #(case @*delete-confirmation-depth
                     2 (go
                         (reset! *delete-confirmation-depth 3)
-                        (<! (http/<delete (str "/characters/" @(rf/subscribe [::subs/cur-char-idx]))))
-                        (<! (<load-characters-summary))
+                        (<? (http/<delete (str "/characters/" @(rf/subscribe [::subs/cur-char-idx]))))
+                        (<? (<load-characters-summary))
                         (reset! *delete-confirmation-depth 4))
                     (swap! *delete-confirmation-depth inc))}
                 {:text "いいえ" :on-click #(do (reset! *delete-confirmation-depth 0)

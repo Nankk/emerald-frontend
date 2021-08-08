@@ -5,9 +5,10 @@
             [emerald-frontend.const :as const]
             [emerald-frontend.util.css :refer [vw]]
             [emerald-frontend.panels.character-status :as status]
+            [emerald-frontend.panels.session.items :as items]
             [emerald-frontend.components.panel :as panel]
             [emerald-frontend.panels.session.growth :as growth]
-            [cljs.core.async :refer [<! go]]
+            [emerald-frontend.util.async :refer [go? <?]]
             [re-frame.core :as rf]
             [reagent.core :as reagent]
             [emerald-frontend.components.list :as list]
@@ -33,7 +34,7 @@
     (let [icon-size (vw 3)
           gap       (vw 1)
           gap-icon  (vw 1.8)
-          choices   [["もちもの" #()]
+          choices   [["もちもの" #(panel/show-modal :player/show-items)]
                      ["まほう" #()]
                      ["そうび" #()]
                      ["つよさ" #(panel/show-modal :player/show-status)]
@@ -59,7 +60,7 @@
 
 (def lv-uppable-notifier
   (let [exp-table (reagent/atom nil)]
-    (go (reset! exp-table (:body (<! (http/<get-data "/tables/exp")))))
+    (go? (reset! exp-table (:body (<? (http/<get-data "/tables/exp")))))
     (fn []
       (when-let [char @(rf/subscribe [::subs/cur-char])]
         (when (and @exp-table
@@ -152,7 +153,8 @@
        [:i.fas.fa-sign-out-alt {:style {:position "absolute" :top (vw 1.5) :left (vw 93)}}]]
       [:div {:on-click #(panel/show-modal :player/settings)}
        [:i.fas.fa-cog {:style {:position "absolute" :top (vw 1.5) :left (vw 96)}}]]]
-     [panel/modal :player/show-status [(vw 3) (vw 5)] [status/main]]
+     [panel/modal :player/show-items [(vw 1.5) (vw 3)] [items/main]]
+     [panel/modal :player/show-status [(vw 1.5) (vw 3)] [status/main]]
      [panel/modal :player/exit [(vw 2) (vw 70)] [exit]]
      [panel/modal :player/settings [(vw 2) (vw 60)] [settings]]
      [panel/modal :player/shop [(vw 2) (vw 2)] [shop/main]]
@@ -162,4 +164,6 @@
   (let []
     [:div.w-100.h-100.p-4
      [panels]
-     [panel/modal :player/growth [(vw 3) (vw 4.5)] [growth/main]]]))
+     [panel/modal :player/growth [(vw 3) (vw 4.5)] [growth/main]]]
+    ;; [items/main]
+    ))

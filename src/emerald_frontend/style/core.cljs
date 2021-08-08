@@ -7,6 +7,7 @@
    [emerald-frontend.style.session.player-home :as player-home]
    [emerald-frontend.style.session.growth :as growth]
    [emerald-frontend.style.session.shop :as shop]
+   [emerald-frontend.style.session.items :as items]
    ))
 
 (defn- appendln [& ss]
@@ -21,4 +22,5 @@
       (appendln (player-home/css))
       (appendln (growth/css))
       (appendln (shop/css))
+      (appendln (items/css))
       ))

@@ -1,6 +1,7 @@
 (ns emerald-frontend.views
   (:require [emerald-frontend.components.container :as container]
             [emerald-frontend.panels.home :as home]
+            [emerald-frontend.panels.initialization :as initialization]
             [emerald-frontend.subs :as subs]
             [emerald-frontend.panels.session.player-home :as player]
             [emerald-frontend.util.css :refer [vw]]
@@ -34,6 +35,8 @@
      {:width  (str @(rf/subscribe [::subs/panel-width]) "px")
       :height (str @(rf/subscribe [::subs/panel-height]) "px")}}
     (case @(rf/subscribe [::subs/cur-panel])
+      :initialization [initialization/main]
       :home           [home/main]
-      :session-player [player/main])
+      :session-player [player/main]
+      [:div.hstack-vcenter-hcenter "Unknown panel"])
     [loading]]])

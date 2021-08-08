@@ -16,6 +16,7 @@
   [async-interop "0.1.0"]
   [garden "1.3.9"]
   [re-com "2.9.0"]
+  [com.taoensso/timbre "5.1.2"]
   ;; For Clojure
   [environ "1.2.0"]]
 

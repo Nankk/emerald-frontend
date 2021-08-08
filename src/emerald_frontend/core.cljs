@@ -1,12 +1,13 @@
 (ns emerald-frontend.core
-  (:require
-   [reagent.dom :as rdom]
-   [re-frame.core :as rf]
-   [emerald-frontend.events :as events]
-   [emerald-frontend.views :as views]
-   [emerald-frontend.config :as config]
-   [emerald-frontend.style.core :as style.core]
-   [emerald-frontend.util.js :refer [by-id]]))
+  (:require [emerald-frontend.cache.data :as data]
+            [emerald-frontend.config :as config]
+            [emerald-frontend.events :as events]
+            [emerald-frontend.util.async :refer [<? go?]]
+            [emerald-frontend.style.core :as style.core]
+            [emerald-frontend.util.js :refer [by-id]]
+            [emerald-frontend.views :as views]
+            [re-frame.core :as rf]
+            [reagent.dom :as rdom]))
 
 (defn- compile-garden []
   (println "Compiling garden...")
@@ -39,4 +40,5 @@
   (-> js/window (.addEventListener "resize" resize-screen))
   (dev-setup)
   (mount-root)
+  (go? (data/<get-all-data-from-server))
   (resize-screen))

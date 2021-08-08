@@ -1,5 +1,5 @@
 (ns emerald-frontend.panels.session.shop
-  (:require [cljs.core.async :refer [<! go]]
+  (:require [emerald-frontend.util.async :refer [go? <?]]
             [emerald-frontend.util.css :refer [vw]]
             [emerald-frontend.util.http :as http]
             [emerald-frontend.components.button :as button]
@@ -17,23 +17,27 @@
    [:div.hstack-vcenter-hcenter.w-100.h-100.font-size-5
     [:div
      [:div.font-size-3 "よろずや（仮）"]
-     [:img {:src "img/dev/sted.png"}]
-     [:div.text-center.font-size-2 "※画像はSTEDのねーちゃん"]]]])
+     [:img {:src "img/dev/sted.png"}]]]])
 
 (defn checkout [{:as states :keys [cart-state all-items]} rest]
   (let [char (atom @(rf/subscribe [::subs/cur-char]))]
     (doseq [[uuid {:keys [name count pack-for quantity]}] @cart-state]
-      (let [target-uuid (or pack-for uuid)
-            target-name (atom nil)
-            _           (walk/postwalk (fn [x]
-                                         (when (and (map? x) (= (x :uuid) target-uuid))
-                                           (reset! target-name (x :name)))
-                                         x)
-                                       @all-items)
-            orig-count  (get-in @char [:items (keyword target-uuid) :count])
-            incr        (* (or quantity 1) count)
-            new-count   (+ (or orig-count 0) incr)
-            new-item    {:uuid target-uuid :name @target-name :count new-count}]
+      (let [target-uuid        (or pack-for uuid)
+            target-name        (atom nil)
+            target-description (atom nil)
+            _                  (walk/postwalk (fn [x]
+                                                (when (and (map? x) (= (x :uuid) target-uuid))
+                                                  (reset! target-name (x :name))
+                                                  (reset! target-description (x :description)))
+                                                x)
+                                              @all-items)
+            orig-count         (get-in @char [:items (keyword target-uuid) :count])
+            incr               (* (or quantity 1) count)
+            new-count          (+ (or orig-count 0) incr)
+            new-item           {:uuid        target-uuid
+                                :name        @target-name
+                                :count       new-count
+                                :description (or @target-description "")}]
         (swap! char #(assoc-in % [:items target-uuid] new-item))))
     (<update-char (assoc-in @char [:status :g] rest) (@char :idx))
     (reset! cart-state {})))
@@ -214,8 +218,8 @@
 (defn main []
   (let [item-table      (reagent/atom nil)
         equipment-table (reagent/atom nil)]
-    (go (reset! item-table (:body (<! (http/<get-data "/items/items"))))
-        (reset! equipment-table (:body (<! (http/<get-data "/items/equipments")))))
+    (go? (reset! item-table (:body (<? (http/<get-data "/items/items"))))
+         (reset! equipment-table (:body (<? (http/<get-data "/items/equipments")))))
     (fn []
       (when (and @item-table @equipment-table)
         (when-not @(shop-states :all-items)

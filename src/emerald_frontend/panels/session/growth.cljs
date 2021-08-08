@@ -7,7 +7,7 @@
    [emerald-frontend.subs :as subs]
    [emerald-frontend.util.http :as http]
    [emerald-frontend.panels.session.util :refer [<update-char]]
-   [cljs.core.async :refer [<! go]]
+   [emerald-frontend.util.async :refer [go? <?]]
    [re-frame.core :as rf]
    [reagent.core :as reagent]
    [clojure.string :as str]
@@ -184,7 +184,7 @@
 
 (def ability-upgrader
   (let [exp-table    (reagent/atom nil)]
-    (go (reset! exp-table (:body (<! (http/<get-data "/tables/exp")))))
+    (go? (reset! exp-table (:body (<? (http/<get-data "/tables/exp")))))
     (fn []
       (when-let* [char         @(rf/subscribe [::subs/cur-char])
                   exp-table    @exp-table]
@@ -425,7 +425,7 @@
 
 (def ability-up
   (let []
-    (go (reset! skills-table (:body (<! (http/<get-data "/tables/skills")))))
+    (go? (reset! skills-table (:body (<? (http/<get-data "/tables/skills")))))
     (fn []
       (when-let* [ability      @cur-ability
                   char         @(rf/subscribe [::subs/cur-char])

@@ -5,20 +5,21 @@
    ))
 
 (def handlers
-  {::initialize-db    (fn [_ [_ _]] db/default-db)
-   ::set-panel-width  [:panel-width]
-   ::set-panel-height [:panel-height]
-   ::show-loading     (fn [db [_ v]]
-                        (assoc db
-                               :loading? true
-                               :loading-message v))
-   ::hide-loading     (fn [db [_]]
-                        (assoc db
-                               :loading? false))
-   ::move-panel-to    [:cur-panel]
-   ::set-cur-char     [:cur-char]
-   ::clear-cur-char   (fn [db [_]] (assoc db :cur-char nil))
-   ::set-cur-char-idx [:cur-char-idx]
+  {::initialize-db              (fn [_ [_ _]] db/default-db)
+   ::set-initialization-message [:initialization-message]
+   ::set-panel-width            [:panel-width]
+   ::set-panel-height           [:panel-height]
+   ::show-loading               (fn [db [_ v]]
+                                  (assoc db
+                                         :loading? true
+                                         :loading-message v))
+   ::hide-loading               (fn [db [_]]
+                                  (assoc db
+                                         :loading? false))
+   ::move-panel-to              [:cur-panel]
+   ::set-cur-char               [:cur-char]
+   ::clear-cur-char             (fn [db [_]] (assoc db :cur-char nil))
+   ::set-cur-char-idx           [:cur-char-idx]
    })
 
 (doseq [[ev-key item] handlers]

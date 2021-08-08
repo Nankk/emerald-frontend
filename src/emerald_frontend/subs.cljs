@@ -4,15 +4,16 @@
    ))
 
 (def subscriptions
-  {::panel-width     [:panel-width]
-   ::panel-height    [:panel-height]
-   ::font-family     [:font-family]
-   ::loading?        [:loading?]
-   ::loading-message [:loading-message]
-   ::chars           [:chars]
-   ::cur-panel       [:cur-panel]
-   ::cur-char        [:cur-char]
-   ::cur-char-idx    [:cur-char-idx]
+  {::panel-width            [:panel-width]
+   ::panel-height           [:panel-height]
+   ::font-family            [:font-family]
+   ::initialization-message [:initialization-message]
+   ::loading?               [:loading?]
+   ::loading-message        [:loading-message]
+   ::chars                  [:chars]
+   ::cur-panel              [:cur-panel]
+   ::cur-char               [:cur-char]
+   ::cur-char-idx           [:cur-char-idx]
    })
 
 (doseq [[sub-key item] subscriptions]

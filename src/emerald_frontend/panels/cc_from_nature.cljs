@@ -7,7 +7,7 @@
             [emerald-frontend.components.list :as list]
             [emerald-frontend.components.panel :as panel]
             [emerald-frontend.const :as const]
-            [emerald-frontend.macros.async :refer [defan defan-]]
+            [emerald-frontend.util.async :refer [go? <?]]
             [emerald-frontend.style.colors :as colors]
             [emerald-frontend.util.http :as http]
             [emerald-frontend.util.js :refer [by-id log]]
@@ -183,16 +183,17 @@
            [:div.font-size-3 (str "精神 " (+ pow mind))]
            [:div.font-size-3 (str "敏捷 " (+ agi technique))]]])]]])
 
-  (defan- register-character-to-server [character-formatted]
-    (panel/show-modal :confirmation-register)
-    (let [res (<! (http/<post-data "/characters" character-formatted))]
-      (println "応答" res)
-      (panel/close-modal :confirmation-register)
-      (if (= (res :status) 200)
-        (panel/show-modal :confirmation-complete)
-        (do (reset! *errors res)
-            (panel/show-modal :confirmation-failure)))
-      true))
+  (defn- register-character-to-server [character-formatted]
+    (go?
+     (panel/show-modal :confirmation-register)
+     (let [res (<? (http/<post-data "/characters" character-formatted))]
+       (println "応答" res)
+       (panel/close-modal :confirmation-register)
+       (if (= (res :status) 200)
+         (panel/show-modal :confirmation-complete)
+         (do (reset! *errors res)
+             (panel/show-modal :confirmation-failure)))
+       true)))
 
   (defn confirmation-main []
     (let [transient @cur-char
@@ -237,11 +238,12 @@
 
   (defonce high-lv-data (reagent/atom {}))
 
-  (defan- <load-high-lv-data []
-    (println "<load-high-lv-data")
-    (let [res (<! (http/<get-data "/tables/high-level-character"))]
-      (reset! high-lv-data (res :body))
-      true))
+  (defn- <load-high-lv-data []
+    (go?
+     (println "<load-high-lv-data")
+     (let [res (<? (http/<get-data "/tables/high-level-character"))]
+       (reset! high-lv-data (res :body))
+       true)))
 
   (def high-lv-state (atom {:achievements   0
                             :additional-exp 0
@@ -339,32 +341,35 @@
 
   (defonce *name-data (atom {}))
 
-  (defan- <load-name []
-    (println "<load-name")
-    (let [res (<! (http/<get-data "/cbb/name"))]
-      (reset! *name-data (res :body))
-      true))
+  (defn- <load-name []
+    (go?
+     (println "<load-name")
+     (let [res (<? (http/<get-data "/cbb/name"))]
+       (reset! *name-data (res :body))
+       true)))
 
-  (defan- <get-image-size [file]
-    (let [ch  (chan)
-          img (js/Image.)]
-      (set! (.-onload img)
-            (fn []
-              (.revokeObjectURL js/URL (.-src img))
-              (go (>! ch {:width (.-width img) :height (.-height img)}))))
-      (set! (.-src img) (.createObjectURL js/URL file))
-      (<! ch)))
+  (defn- <get-image-size [file]
+    (go?
+     (let [ch  (chan)
+           img (js/Image.)]
+       (set! (.-onload img)
+             (fn []
+               (.revokeObjectURL js/URL (.-src img))
+               (go? (>! ch {:width (.-width img) :height (.-height img)}))))
+       (set! (.-src img) (.createObjectURL js/URL file))
+       (<? ch))))
 
-  (defan- <load-image [file]
-    (if (<= (.-size file) const/upload-image-size-limit)
-      (let [image (merge {:size      (.-size file)
-                          :base64    (str/replace (<p! (js/toDataURLPromise file)) #"data.*base64," "")
-                          :extension ((re-find #"\.([^\.]+)$" (.-name file)) 1)}
-                         (<! (<get-image-size file)))]
-        (swap! cur-char (fn [c] (assoc-in c [:options :image] image)))
-        true)
-      (do (panel/show-modal :name-error)
-          false)))
+  (defn- <load-image [file]
+    (go?
+     (if (<= (.-size file) const/upload-image-size-limit)
+       (let [image (merge {:size      (.-size file)
+                           :base64    (str/replace (<p! (js/toDataURLPromise file)) #"data.*base64," "")
+                           :extension ((re-find #"\.([^\.]+)$" (.-name file)) 1)}
+                          (<? (<get-image-size file)))]
+         (swap! cur-char (fn [c] (assoc-in c [:options :image] image)))
+         true)
+       (do (panel/show-modal :name-error)
+           false))))
 
   (defn- profile-image []
     [:div
@@ -482,11 +487,12 @@
   (defonce *cur-reason (reagent/atom nil))
   (defonce *reason-data (reagent/atom {}))
 
-  (defan- <load-reason []
-    (println "<load-reason")
-    (let [res (<! (http/<get-data "/cbb/departure-reason"))]
-      (reset! *reason-data (res :body))
-      true))
+  (defn- <load-reason []
+    (go?
+     (println "<load-reason")
+     (let [res (<? (http/<get-data "/cbb/departure-reason"))]
+       (reset! *reason-data (res :body))
+       true)))
 
   (defn- reason-detail []
     (when-let [reason @*cur-reason]
@@ -499,8 +505,8 @@
                    :on-click
                    #(do
                       (swap! cur-char (fn [c] (assoc-in c
-                                                         [:options :nature :adolescence :departure-reason]
-                                                         {:abstract reason})))
+                                                        [:options :nature :adolescence :departure-reason]
+                                                        {:abstract reason})))
                       (container/switch-panels :cc-nature/reason :cc-nature/name :left))}
                   {:text "いいえ" :on-click #(panel/close-modal :reason-detail)}]
         :direction :horizontal]]))
@@ -545,11 +551,12 @@
   (defonce *sub-item        (reagent/atom nil))
   (defonce *happening-data (reagent/atom {}))
 
-  (defan- <load-happening []
-    (println "<load-happening")
-    (let [res (<! (http/<get-data "/cbb/happening"))]
-      (reset! *happening-data (res :body))
-      true))
+  (defn- <load-happening []
+    (go?
+     (println "<load-happening")
+     (let [res (<? (http/<get-data "/cbb/happening"))]
+       (reset! *happening-data (res :body))
+       true)))
 
   (def multiple-sweethearts
     [(str (max (rand-int 6) 2) "人の異性")
@@ -718,11 +725,12 @@
   (defonce *adolescence-data (reagent/atom {}))
   (defonce *proficiency (reagent/atom nil))
 
-  (defan- <load-adolescence []
-    (println "<load-adolescence")
-    (let [res (<! (http/<get-data "/cbb/adolescence"))]
-      (reset! *adolescence-data (res :body))
-      true))
+  (defn- <load-adolescence []
+    (go?
+     (println "<load-adolescence")
+     (let [res (<? (http/<get-data "/cbb/adolescence"))]
+       (reset! *adolescence-data (res :body))
+       true)))
 
   (defn- equipment-proficiency [candidates]
     [:div
@@ -819,11 +827,12 @@
   (defonce *childhood-data (reagent/atom {}))
   (defonce *language (reagent/atom {}))
 
-  (defan- <load-childhood []
-    (println "<load-childhood")
-    (let [res (<! (http/<get-data "/cbb/childhood"))]
-      (reset! *childhood-data (res :body))
-      true))
+  (defn- <load-childhood []
+    (go?
+     (println "<load-childhood")
+     (let [res (<? (http/<get-data "/cbb/childhood"))]
+       (reset! *childhood-data (res :body))
+       true)))
 
   (defn- language [languages]
     [:div
@@ -919,11 +928,12 @@
   (defonce *cur-infancy  (reagent/atom nil))
   (defonce *infancy-data (reagent/atom {}))
 
-  (defan- <load-infancy []
-    (println "<load-infancy")
-    (let [res (<! (http/<get-data "/cbb/infancy"))]
-      (reset! *infancy-data (res :body))
-      true))
+  (defn- <load-infancy []
+    (go?
+     (println "<load-infancy")
+     (let [res (<? (http/<get-data "/cbb/infancy"))]
+       (reset! *infancy-data (res :body))
+       true)))
 
   (defn- set-infancy-to-cur-character [infancy]
     (swap! cur-char (fn [c] (assoc-in c
@@ -1021,11 +1031,12 @@
   (defonce *cur-born          (reagent/atom nil))
   (defonce *born-data         (reagent/atom {}))
 
-  (defan- <load-born []
-    (println "<load-born")
-    (let [res (<! (http/<get-data "/cbb/born"))]
-      (reset! *born-data (res :body))
-      true))
+  (defn- <load-born []
+    (go?
+     (println "<load-born")
+     (let [res (<? (http/<get-data "/cbb/born"))]
+       (reset! *born-data (res :body))
+       true)))
 
   ;; Options
 
