@@ -17,7 +17,7 @@
 (defn main []
   (let [char @(rf/subscribe [::subs/cur-char])]
     [:div#player-items
-     [:div.grid-container.base-container.vw-90.vh-50
+     [:div.grid-container.base-container.vw-90.vh-50.font-size-4
       ;; items
       [:div.items.h-100
        [:div.overflow-auto {:style {:width  (vw 87)

@@ -84,7 +84,7 @@
 
 ;;; Tab ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def tabs
+(defn tabs [& [options]]
   "Options:
   | header    | Header text or component                                                |
   | items     | Defined as a vector of maps.                                            |
@@ -98,7 +98,7 @@
         tab-id       (str (random-uuid))
         tabs-vw      (reagent/atom nil)
         cur-item-key (reagent/atom nil)]
-    (fn [& [options]]
+    (fn []
       (reagent/create-class
        {:component-did-mount
         (fn []

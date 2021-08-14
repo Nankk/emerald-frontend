@@ -45,13 +45,13 @@
         [:div.base-container.hstack-vcenter-hcenter
          {:style    {:height (vw 7)}
           :on-click #(move-page -1)}
-         [:div "◁"]]]]
+         [:div.font-size-4 "◁"]]]]
       [:div.aux-right
        [:div.hstack-vcenter-hcenter.w-100.h-100
         [:div.base-container.hstack-vcenter-hcenter
          {:style    {:height (vw 7)}
           :on-click #(move-page 1)}
-         [:div "▷"]]]]
+         [:div.font-size-4 "▷"]]]]
       [:div.status {:style {:font-size (vw 1.5)}}
        [:div.base-container.h-100
         [:div (str first " " middle " " last)] ; Name
@@ -171,13 +171,13 @@
       [:div.base-container.hstack-vcenter-hcenter
        {:style {:height (vw 7)}
         :on-click #(move-page -1)}
-       [:div "◁"]]]]
+       [:div.font-size-4 "◁"]]]]
     [:div.aux-right
      [:div.hstack-vcenter-hcenter.w-100.h-100
       [:div.base-container.hstack-vcenter-hcenter
        {:style {:height (vw 7)}
         :on-click #(move-page 1)}
-       [:div "▷"]]]]
+       [:div.font-size-4 "▷"]]]]
     [:div.abilities {:style {:font-size (vw 1.5)}}
      [:div.base-container.h-100
       [:div.ml-2 "技能"]

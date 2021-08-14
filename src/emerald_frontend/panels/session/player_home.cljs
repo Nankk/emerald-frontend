@@ -17,10 +17,13 @@
 (defn screen []
   (when-let [char @(rf/subscribe [::subs/cur-char])]
     [:div.screen
+     ;; [:div.w-100.h-100
+     ;;  [:iframe.w-100.h-100 {:src "https://udonarium2d.netlify.app/"}]]
      [:div.vstack-vcenter-hcenter.w-100.h-100.font-size-5
       [:div.mb-4 "セッションに参加していません"]
       [:button.nes-btn.is-primary
-       "参加する！"]]]))
+       "参加する！"]]
+     ]))
 
 (defn title []
   [:div.title.font-size-5.w-100.h-100

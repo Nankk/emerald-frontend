@@ -102,10 +102,10 @@
 
 (defn tabs [{:keys [all-items cur-shelf ranks-displayed?]}]
   [:div.font-size-4.vw-35
-   [panel/tabs {:header    "商品棚"
-                :items     (vec (for [[k v] shelves] {:key k :value v}))
-                :on-change (fn [prev new] (reset! cur-shelf new))
-                :init-key  :weapons}]
+   [(panel/tabs {:header    "商品棚"
+                 :items     (vec (for [[k v] shelves] {:key k :value v}))
+                 :on-change (fn [prev new] (reset! cur-shelf new))
+                 :init-key  :weapons})]
    (when (:rank (first (@all-items @cur-shelf)))
      [:div.hstack-vcenter-justify.px-5
       [:div "ランク"]
