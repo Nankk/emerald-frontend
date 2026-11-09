@@ -46,7 +46,8 @@
 
 - フロントエンド（本リポジトリ）: ClojureScript、shadow-cljs、re-frame + Reagent、re-com、garden（CSS も Clojure で記述）、React 16、Bootstrap 4。フォントは PixelMplus。
 - サーバー（[[https://github.com/Nankk/emerald-server][emerald-server]]）: Clojure 1.10、Ring + Jetty、Reitit（Swagger UI 付き）、PostgreSQL、duratom。
-  Excel の読み込みには docjure を自分でフォークして Clojars に公開した版（ ~org.clojars.nankk/docjure~ ）を使っています。
+  Excel の読み込みには [[https://github.com/Nankk/docjure][docjure を自分でフォークした版]]（Clojars に ~org.clojars.nankk/docjure~ として公開）を使っています。
+  POI が未実装の関数（TEXTJOIN など）を含むセルで数式の評価に失敗したとき、ファイルに保存されている計算結果を読むようにした改良で、テスト付きです。
 - どちらも Docker イメージをビルドでき、GitLab CI でタグ付け時にコンテナレジストリへ登録していました（ ~.gitlab-ci.yml~ は当時のまま）。
 
 * 分担
